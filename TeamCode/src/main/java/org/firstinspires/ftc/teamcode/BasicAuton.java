@@ -88,8 +88,8 @@ public class BasicAuton extends LinearOpMode {
     public void runOpMode() {
 
         // Initialize the drive system variables.
-        fl = hardwareMap.get(DcMotor.class, "fl");
-        fr = hardwareMap.get(DcMotor.class, "fr");
+        fl = hardwareMap.get(DcMotor.class, "flMotor");
+        fr = hardwareMap.get(DcMotor.class, "frMotor");
         // To drive forward, most robots need the motor on one side to be reversed, because the axles point in opposite directions.
         // When run, this OpMode should start both motors driving forward. So adjust these two lines based on your first test drive.
         // Note: The settings here assume direct drive on left and right wheels.  Gear Reduction or 90 Deg drives may require direction flips

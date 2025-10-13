@@ -10,10 +10,7 @@ import com.qualcomm.robotcore.hardware.Servo;
 @TeleOp(name="Mechanum Drive Code PID")
 public class MechanumDriveCode extends LinearOpMode {
     private DcMotorEx flMotor, frMotor, blMotor, brMotor;
-    private DcMotorEx slideMotor, armMotor, linearAccelerator;
-    private CRServo sampleIntakeServo;
-    private Servo leftSpecimenIntakeServo, rightSpecimenIntakeServo;
-
+    private DcMotorEx outakemotor;
     public static double p = 0.003, i = 0.5, d = 1.5;
     public static double f = 0.001;
     public static double target = 0.0;
@@ -45,13 +42,29 @@ public class MechanumDriveCode extends LinearOpMode {
         blMotor.setPower(blPower);
         brMotor.setPower(brPower);
     }
+    public void outake() {
 
+        if (gamepad1.a){
+            outakemotor.setPower(.4);
+        }
+
+        if (gamepad1.b){
+
+            outakemotor.setPower(-.5);
+        }
+
+        if (gamepad1.x){
+            outakemotor.setPower(0);
+        }
+
+    }
     public void initialization() {
         // Initialization
-        flMotor = hardwareMap.get(DcMotorEx.class, "fl");
-        frMotor = hardwareMap.get(DcMotorEx.class, "fr");
-        blMotor = hardwareMap.get(DcMotorEx.class, "bl");
-        brMotor = hardwareMap.get(DcMotorEx.class, "br");
+        flMotor = hardwareMap.get(DcMotorEx.class, "flMotor");
+        frMotor = hardwareMap.get(DcMotorEx.class, "frMotor");
+        blMotor = hardwareMap.get(DcMotorEx.class, "blMotor");
+        brMotor = hardwareMap.get(DcMotorEx.class, "brMotor");
+        outakemotor = hardwareMap.get(DcMotorEx.class, "OuttakeMotor");
 
         flMotor.setZeroPowerBehavior(DcMotorEx.ZeroPowerBehavior.BRAKE);
         frMotor.setZeroPowerBehavior(DcMotorEx.ZeroPowerBehavior.BRAKE);
@@ -76,6 +89,7 @@ public class MechanumDriveCode extends LinearOpMode {
 
         while (opModeIsActive()) {
             this.drive();
+            this.outake();
             telemetry.update();
         }
     }
