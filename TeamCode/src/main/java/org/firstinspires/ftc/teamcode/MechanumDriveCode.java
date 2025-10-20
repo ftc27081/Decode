@@ -11,6 +11,8 @@ import com.qualcomm.robotcore.hardware.Servo;
 public class MechanumDriveCode extends LinearOpMode {
     private DcMotorEx flMotor, frMotor, blMotor, brMotor;
     private DcMotorEx outakemotor;
+
+    private CRServo release;
     public static double p = 0.003, i = 0.5, d = 1.5;
     public static double f = 0.001;
     public static double target = 0.0;
@@ -44,20 +46,21 @@ public class MechanumDriveCode extends LinearOpMode {
     }
     public void outake() {
 
-        if (gamepad1.a){
-            outakemotor.setPower(.4);
-        }
 
-        if (gamepad1.b){
-
-            outakemotor.setPower(-.5);
-        }
-
-        if (gamepad1.x){
-            outakemotor.setPower(0);
-        }
+            outakemotor.setPower(gamepad1.left_stick_y);
 
     }
+
+    public void release(){
+
+        if(gamepad2.a){
+            release.setPower(0.75);
+        }
+
+
+
+    }
+
     public void initialization() {
         // Initialization
         flMotor = hardwareMap.get(DcMotorEx.class, "flMotor");
@@ -65,6 +68,8 @@ public class MechanumDriveCode extends LinearOpMode {
         blMotor = hardwareMap.get(DcMotorEx.class, "blMotor");
         brMotor = hardwareMap.get(DcMotorEx.class, "brMotor");
         outakemotor = hardwareMap.get(DcMotorEx.class, "OuttakeMotor");
+        release = hardwareMap.get(CRServo.class,"Servo");
+
 
         flMotor.setZeroPowerBehavior(DcMotorEx.ZeroPowerBehavior.BRAKE);
         frMotor.setZeroPowerBehavior(DcMotorEx.ZeroPowerBehavior.BRAKE);
@@ -90,6 +95,7 @@ public class MechanumDriveCode extends LinearOpMode {
         while (opModeIsActive()) {
             this.drive();
             this.outake();
+            this.release();
             telemetry.update();
         }
     }
