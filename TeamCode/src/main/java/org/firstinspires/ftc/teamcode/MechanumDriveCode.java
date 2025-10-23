@@ -1,23 +1,17 @@
 package org.firstinspires.ftc.teamcode;
 
- import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
+import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.CRServo;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.Servo;
 
-@TeleOp(name="Mechanum Drive Code PID")
+@TeleOp(name="Mechanum DriveCode")
 public class MechanumDriveCode extends LinearOpMode {
     private DcMotorEx flMotor, frMotor, blMotor, brMotor;
-    private DcMotorEx slideMotor, armMotor, linearAccelerator;
-    private CRServo sampleIntakeServo;
-    private Servo leftSpecimenIntakeServo, rightSpecimenIntakeServo;
-
-    public static double p = 0.003, i = 0.5, d = 1.5;
-    public static double f = 0.001;
-    public static double target = 0.0;
-
+    private DcMotorEx outakeMotor;
+    private Servo artifactGate;
 
     // Drive code
     public void drive() {
@@ -39,19 +33,37 @@ public class MechanumDriveCode extends LinearOpMode {
             frPower /= maxPower;
             brPower /= maxPower;
         }
-
         flMotor.setPower(flPower);
         frMotor.setPower(frPower);
         blMotor.setPower(blPower);
         brMotor.setPower(brPower);
     }
+    public void outake() {
+        if (gamepad2.a){
+           outakeMotor.setPower(0.6);
+        }
+        if (gamepad2.b){
+            outakeMotor.setPower(-0.6);
+        }
+        if (gamepad2.x){
+            outakeMotor.setPower(0);
+        }
+    }
+
+    public void release() {
+        if (gamepad2.a) {
+            artifactGate.setDirection(Servo.Direction.REVERSE);
+        }
+    }
 
     public void initialization() {
         // Initialization
-        flMotor = hardwareMap.get(DcMotorEx.class, "fl");
-        frMotor = hardwareMap.get(DcMotorEx.class, "fr");
-        blMotor = hardwareMap.get(DcMotorEx.class, "bl");
-        brMotor = hardwareMap.get(DcMotorEx.class, "br");
+        flMotor = hardwareMap.get(DcMotorEx.class, "flMotor");
+        frMotor = hardwareMap.get(DcMotorEx.class, "frMotor");
+        blMotor = hardwareMap.get(DcMotorEx.class, "blMotor");
+        brMotor = hardwareMap.get(DcMotorEx.class, "brMotor");
+        outakeMotor = hardwareMap.get(DcMotorEx.class, "outtakeMotor");
+        artifactGate = hardwareMap.get(Servo.class,"artifactGate");
 
         flMotor.setZeroPowerBehavior(DcMotorEx.ZeroPowerBehavior.BRAKE);
         frMotor.setZeroPowerBehavior(DcMotorEx.ZeroPowerBehavior.BRAKE);
@@ -61,8 +73,6 @@ public class MechanumDriveCode extends LinearOpMode {
         // Reverse direction of motors
         flMotor.setDirection(DcMotorSimple.Direction.REVERSE);
         blMotor.setDirection(DcMotorSimple.Direction.REVERSE);
-
-
     }
 
     public void runOpMode() {
@@ -76,6 +86,8 @@ public class MechanumDriveCode extends LinearOpMode {
 
         while (opModeIsActive()) {
             this.drive();
+            this.outake();
+            this.release();
             telemetry.update();
         }
     }
