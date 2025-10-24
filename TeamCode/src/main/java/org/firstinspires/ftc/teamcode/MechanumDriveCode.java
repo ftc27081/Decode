@@ -20,10 +20,10 @@ public class MechanumDriveCode extends LinearOpMode {
         double yaw = 0.7 * gamepad1.right_stick_x;
 
         //calculate powers
-        double flPower = xPower + yPower + yaw;
-        double frPower = -xPower + yPower - yaw;
-        double blPower = -xPower + yPower + yaw;
-        double brPower = xPower + yPower - yaw;
+        double flPower = -xPower + yPower - yaw;
+        double frPower = xPower + yPower + yaw;
+        double blPower = xPower + yPower - yaw;
+        double brPower = -xPower + yPower + yaw;
 
         double maxPower = Math.max(Math.max(Math.abs(flPower), Math.abs(frPower)), Math.max(Math.abs(blPower), Math.abs(brPower)));
         if(maxPower > 1.0) {
@@ -39,10 +39,10 @@ public class MechanumDriveCode extends LinearOpMode {
     }
     public void outake() {
         if (gamepad2.a){
-           outakeMotor.setPower(0.6);
+           outakeMotor.setPower(0.5);
         }
-        if (gamepad2.b){
-            outakeMotor.setPower(-0.6);
+        if(gamepad2.b) {
+            outakeMotor.setPower(-0.5);
         }
         if (gamepad2.x){
             outakeMotor.setPower(0);
@@ -50,9 +50,22 @@ public class MechanumDriveCode extends LinearOpMode {
     }
 
     public void release() {
-        if (gamepad2.a) {
-            artifactGate.setDirection(Servo.Direction.REVERSE);
+
+        telemetry.addData(" current position", artifactGate.getPosition());
+
+        if (gamepad1.b) {
+            telemetry.addData(" current position", gamepad2.b);
+            artifactGate.setPosition(0.0);
+            telemetry.addData(" current position", artifactGate.getPosition());
+
         }
+        if (gamepad1.a) {
+            telemetry.addData("A is pressed on gamepad1", gamepad2.a);
+            artifactGate.setPosition(0.5);
+            telemetry.addData(" current position", artifactGate.getPosition());
+
+        }
+        telemetry.update();
     }
 
     public void initialization() {
@@ -82,6 +95,8 @@ public class MechanumDriveCode extends LinearOpMode {
         telemetry.addData("Status", "Waiting");
         telemetry.update();
         waitForStart();
+        artifactGate.setPosition(0);
+        artifactGate.setDirection(Servo.Direction.FORWARD);
 
         while (opModeIsActive()) {
             this.drive();
