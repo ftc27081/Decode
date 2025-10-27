@@ -3,6 +3,8 @@ package org.firstinspires.ftc.teamcode;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.hardware.DcMotor;
+import com.qualcomm.robotcore.hardware.DcMotorEx;
+import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
 
@@ -11,7 +13,13 @@ import com.qualcomm.robotcore.util.ElapsedTime;
 @Autonomous(name = "Basic Auton", group = "Autonomous")
 public class Auton extends LinearOpMode {
 
-    private DcMotor lf, rf, lb, rb;
+
+
+
+    private DcMotorEx flMotor, frMotor, blMotor, brMotor;
+    private DcMotor outakeMotor;
+    private Servo artifactGate;
+
     private ElapsedTime runtime = new ElapsedTime();
 
     // Motor ticks per revolution
@@ -22,14 +30,17 @@ public class Auton extends LinearOpMode {
     @Override
     public void runOpMode() {
         // Map motors
-        lf = hardwareMap.get(DcMotor.class, "leftFront");
-        rf = hardwareMap.get(DcMotor.class, "rightFront");
-        lb = hardwareMap.get(DcMotor.class, "leftRear");
-        rb = hardwareMap.get(DcMotor.class, "rightRear");
+        flMotor = hardwareMap.get(DcMotorEx.class, "flMotor");
+        frMotor = hardwareMap.get(DcMotorEx.class, "frMotor");
+        blMotor = hardwareMap.get(DcMotorEx.class, "blMotor");
+        brMotor = hardwareMap.get(DcMotorEx.class, "brMotor");
+        outakeMotor = hardwareMap.get(DcMotor.class, "outtakeMotor");
+        artifactGate = hardwareMap.get(Servo.class,"artifactGate");
+        artifactGate.setDirection(Servo.Direction.FORWARD);
 
         // Set motor direction
-        lf.setDirection(DcMotor.Direction.REVERSE);
-        lb.setDirection(DcMotor.Direction.REVERSE);
+        flMotor.setDirection(DcMotor.Direction.REVERSE);
+        blMotor.setDirection(DcMotor.Direction.REVERSE);
 
         // Reset encoders
         resetEncoders();
@@ -37,17 +48,17 @@ public class Auton extends LinearOpMode {
         waitForStart();
 
         if (opModeIsActive()) {
-            encoderDrive(0.5, 24, 5); // Drive forward 24 inches at 50% power, 5 second timeout
-            encoderDrive(0.5, -30, 5);
-            encoderStrafe(0.5, 15, 5);
-            encoderStrafe(0.5, -20, 5);
-
+            encoderDrive(0.25, 83, 5); // Drive forward 24 inches at 50% power, 5 second timeout
+            encoderTurn(0.25,-57,5);
+            encoderDrive(0.75,5,5);
+            shootball();
 
         }
     }
 
+
     private void resetEncoders() {
-        DcMotor[] motors = {lf, rf, lb, rb};
+        DcMotor[] motors = {flMotor, frMotor, blMotor, brMotor};
         for (DcMotor motor : motors) {
             motor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
             motor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
@@ -56,36 +67,37 @@ public class Auton extends LinearOpMode {
 
 
     private void encoderStrafe(double speed, double inches, double timeoutS) {
+
         int moveCounts = (int)(inches * COUNTS_PER_INCH);
 
         // Strafing adjustments for each motor
-        int leftFrontTarget = lf.getCurrentPosition() + moveCounts;
-        int rightFrontTarget = rf.getCurrentPosition() - moveCounts;
-        int leftRearTarget = lb.getCurrentPosition() - moveCounts;
-        int rightRearTarget = rb.getCurrentPosition() + moveCounts;
+        int leftFrontTarget = flMotor.getCurrentPosition() + moveCounts;
+        int rightFrontTarget = frMotor.getCurrentPosition() - moveCounts;
+        int leftRearTarget = blMotor.getCurrentPosition() - moveCounts;
+        int rightRearTarget = brMotor.getCurrentPosition() + moveCounts;
 
         // Set Target Positions
-        lf.setTargetPosition(leftFrontTarget);
-        rf.setTargetPosition(rightFrontTarget);
-        lb.setTargetPosition(leftRearTarget);
-        rb.setTargetPosition(rightRearTarget);
+        flMotor.setTargetPosition(leftFrontTarget);
+        frMotor.setTargetPosition(rightFrontTarget);
+        blMotor.setTargetPosition(leftRearTarget);
+        brMotor.setTargetPosition(rightRearTarget);
 
         // Switch to RUN_TO_POSITION
-        lf.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-        rf.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-        lb.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-        rb.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+        flMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+        frMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+        blMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+        brMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
 
         // Start motion
-        lf.setPower(speed);
-        rf.setPower(speed);
-        lb.setPower(speed);
-        rb.setPower(speed);
+        flMotor.setPower(speed);
+        frMotor.setPower(speed);
+        blMotor.setPower(speed);
+        brMotor.setPower(speed);
 
         runtime.reset();
         while (opModeIsActive() &&
                 (runtime.seconds() < timeoutS) &&
-                (lf.isBusy() && rf.isBusy() && lb.isBusy() && rb.isBusy())) {
+                (flMotor.isBusy() && frMotor.isBusy() && blMotor.isBusy() && brMotor.isBusy())) {
             telemetry.addData("Strafing", "Running at %.2f inches", inches);
             telemetry.update();
         }
@@ -94,41 +106,44 @@ public class Auton extends LinearOpMode {
         stopAllMotors();
 
         // Reset to RUN_USING_ENCODER
-        lf.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-        rf.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-        lb.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-        rb.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        flMotor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        frMotor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        blMotor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        brMotor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
     }
 
+
+
+
     private void encoderDrive(double speed, double inches, double timeoutS) {
-        int newLeftFrontTarget = lf.getCurrentPosition() + (int)(inches * COUNTS_PER_INCH);
-        int newRightFrontTarget = rf.getCurrentPosition() + (int)(inches * COUNTS_PER_INCH);
-        int newLeftRearTarget = lb.getCurrentPosition() + (int)(inches * COUNTS_PER_INCH);
-        int newRightRearTarget = rb.getCurrentPosition() + (int)(inches * COUNTS_PER_INCH);
+        int newLeftFrontTarget = flMotor.getCurrentPosition() + (int)(inches * COUNTS_PER_INCH);
+        int newRightFrontTarget = frMotor.getCurrentPosition() + (int)(inches * COUNTS_PER_INCH);
+        int newLeftRearTarget = blMotor.getCurrentPosition() + (int)(inches * COUNTS_PER_INCH);
+        int newRightRearTarget = brMotor.getCurrentPosition() + (int)(inches * COUNTS_PER_INCH);
 
         // Set Target Positions
-        lf.setTargetPosition(newLeftFrontTarget);
-        rf.setTargetPosition(newRightFrontTarget);
-        lb.setTargetPosition(newLeftRearTarget);
-        rb.setTargetPosition(newRightRearTarget);
+        flMotor.setTargetPosition(newLeftFrontTarget);
+        frMotor.setTargetPosition(newRightFrontTarget);
+        blMotor.setTargetPosition(newLeftRearTarget);
+        brMotor.setTargetPosition(newRightRearTarget);
 
         // Switch to RUN_TO_POSITION
-        lf.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-        rf.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-        lb.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-        rb.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+        flMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+        frMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+        blMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+        brMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
 
         // Start motion
-        lf.setPower(speed);
-        rf.setPower(speed);
-        lb.setPower(speed);
-        rb.setPower(speed);
+        flMotor.setPower(speed);
+        frMotor.setPower(speed);
+        blMotor.setPower(speed);
+        brMotor.setPower(speed);
 
         // Keep looping while we are still active, and all motors are running to position
         runtime.reset();
         while (opModeIsActive() &&
                 (runtime.seconds() < timeoutS) &&
-                (lf.isBusy() && rf.isBusy() && lb.isBusy() && rb.isBusy())) {
+                (flMotor.isBusy() && frMotor.isBusy() && blMotor.isBusy() && brMotor.isBusy())) {
             telemetry.addData("Path", "Driving to %.2f inches", inches);
             telemetry.update();
         }
@@ -137,16 +152,92 @@ public class Auton extends LinearOpMode {
         stopAllMotors();
 
         // Reset to RUN_USING_ENCODER
-        lf.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-        rf.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-        lb.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-        rb.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        flMotor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        frMotor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        blMotor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        brMotor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
     }
 
+    private void encoderTurn(double speed, double degrees, double timeoutS) {
+
+        double TURN_DIAMETER_INCHES = 18.0; // Distance between left and right wheels (adjust for your robot)
+        double TURN_CIRCUMFERENCE = TURN_DIAMETER_INCHES * Math.PI;
+
+        // Fraction of a full circle
+        double turnFraction = Math.abs(degrees) / 360.0;
+
+        // How far each wheel travels during the turn
+        double turnDistance = TURN_CIRCUMFERENCE * turnFraction;
+
+        // Convert to encoder counts
+        int moveCounts = (int) (turnDistance * COUNTS_PER_INCH);
+
+        // Left and right sides move in opposite directions
+        int leftTargetChange = (degrees > 0) ? moveCounts : -moveCounts;
+        int rightTargetChange = (degrees > 0) ? -moveCounts : moveCounts;
+
+        // Calculate new targets
+        int newLeftFrontTarget = flMotor.getCurrentPosition() + leftTargetChange;
+        int newLeftRearTarget = blMotor.getCurrentPosition() + leftTargetChange;
+        int newRightFrontTarget = frMotor.getCurrentPosition() + rightTargetChange;
+        int newRightRearTarget = brMotor.getCurrentPosition() + rightTargetChange;
+
+        // Set target positions
+        flMotor.setTargetPosition(newLeftFrontTarget);
+        blMotor.setTargetPosition(newLeftRearTarget);
+        frMotor.setTargetPosition(newRightFrontTarget);
+        brMotor.setTargetPosition(newRightRearTarget);
+
+        // Set to RUN_TO_POSITION mode
+        flMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+        blMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+        frMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+        brMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+
+        // Start motion
+        flMotor.setPower(Math.abs(speed));
+        blMotor.setPower(Math.abs(speed));
+        frMotor.setPower(Math.abs(speed));
+        brMotor.setPower(Math.abs(speed));
+
+        runtime.reset();
+        while (opModeIsActive() &&
+                (runtime.seconds() < timeoutS) &&
+                (flMotor.isBusy() && frMotor.isBusy() && blMotor.isBusy() && brMotor.isBusy())) {
+            telemetry.addData("Turning", "%.1f degrees", degrees);
+            telemetry.update();
+        }
+
+        // Stop all motion
+        stopAllMotors();
+
+        // Return to normal encoder mode
+        flMotor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        blMotor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        frMotor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        brMotor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+    }
+
+
+    private void shootball(){
+
+        outakeMotor.setPower(0.5);
+        sleep(3000);
+
+        artifactGate.setPosition(1);
+
+        sleep(8000);
+
+        outakeMotor.setPower(0);
+
+        artifactGate.setPosition(0.25);
+    }
+
+
     private void stopAllMotors() {
-        lf.setPower(0);
-        rf.setPower(0);
-        lb.setPower(0);
-        rb.setPower(0);
+        flMotor.setPower(0);
+        frMotor.setPower(0);
+        blMotor.setPower(0);
+        brMotor.setPower(0);
     }
 }
