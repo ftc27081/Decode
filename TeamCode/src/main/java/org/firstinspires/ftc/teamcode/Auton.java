@@ -221,7 +221,7 @@ public class Auton extends LinearOpMode {
 
     private void shootball(){
 
-        outakeMotor.setPower(0.5);
+        outakeMotor.setPower(0.7);
         sleep(3000);
 
         artifactGate.setPosition(1);

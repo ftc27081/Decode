@@ -15,15 +15,16 @@ public class MechanumDriveCode extends LinearOpMode {
 
     public void drive() {
         //get joystick values
-        double xPower = 0.7 * gamepad1.right_stick_y;
-        double yPower = 0.7 * gamepad1.left_stick_x;
-        double yaw = 0.7 * gamepad1.left_stick_y;
+       double yPower = 0.7 * gamepad1.left_stick_y;   // forward and back
+       double yaw = 0.7 * -gamepad1.right_stick_x;  // turning
+        double xPower = 0.7 * gamepad1.left_stick_x;   // drive
 
         //calculate powers
-        double flPower = xPower + yPower + yaw;
-        double frPower = -xPower + yPower - yaw;
-        double blPower = -xPower + yPower + yaw;
-        double brPower = xPower + yPower - yaw;
+        double flPower = yPower + xPower + yaw ;
+        double frPower = yPower -xPower - yaw ;
+        double blPower = yPower  -xPower + yaw;
+        double brPower = yPower +xPower - yaw;
+
 
         double maxPower = Math.max(Math.max(Math.abs(flPower), Math.abs(frPower)), Math.max(Math.abs(blPower), Math.abs(brPower)));
         if(maxPower > 1.0) {
@@ -37,6 +38,10 @@ public class MechanumDriveCode extends LinearOpMode {
         frMotor.setPower(frPower);
         blMotor.setPower(blPower);
         brMotor.setPower(brPower);
+
+        telemetry.addData("Motor power is set","%.3f %.3f %.3f %.3f ", flPower,frPower,blPower,brPower);
+        telemetry.update();
+
     }
 
     public void outake() {
@@ -73,10 +78,16 @@ public class MechanumDriveCode extends LinearOpMode {
         artifactGate.setDirection(Servo.Direction.FORWARD);
         artifactGate.setPosition(1.0);
 
+        frMotor.setDirection(DcMotorSimple.Direction.REVERSE);
+        brMotor.setDirection(DcMotorSimple.Direction.REVERSE);
+
+        outakeMotor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         flMotor.setZeroPowerBehavior(DcMotorEx.ZeroPowerBehavior.BRAKE);
         frMotor.setZeroPowerBehavior(DcMotorEx.ZeroPowerBehavior.BRAKE);
         blMotor.setZeroPowerBehavior(DcMotorEx.ZeroPowerBehavior.BRAKE);
         brMotor.setZeroPowerBehavior(DcMotorEx.ZeroPowerBehavior.BRAKE);
+
+
 
     }
 
