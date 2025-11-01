@@ -1,20 +1,15 @@
 package org.firstinspires.ftc.teamcode;
 
-import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
+import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
 
-
-
-@Autonomous(name = "Basic Auton", group = "Autonomous")
-public class Auton extends LinearOpMode {
-
-
-
+@Autonomous(name = "Depot Zone", group = "Autonomous")
+public class DepotZone extends LinearOpMode {
 
     private DcMotorEx flMotor, frMotor, blMotor, brMotor;
     private DcMotor outakeMotor;
@@ -35,6 +30,7 @@ public class Auton extends LinearOpMode {
         blMotor = hardwareMap.get(DcMotorEx.class, "blMotor");
         brMotor = hardwareMap.get(DcMotorEx.class, "brMotor");
         outakeMotor = hardwareMap.get(DcMotor.class, "outtakeMotor");
+        outakeMotor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         artifactGate = hardwareMap.get(Servo.class,"artifactGate");
         artifactGate.setDirection(Servo.Direction.FORWARD);
         artifactGate.setPosition(1.0);
@@ -49,11 +45,8 @@ public class Auton extends LinearOpMode {
         waitForStart();
 
         if (opModeIsActive()) {
-            encoderDrive(0.25, 83, 5); // Drive forward 24 inches at 50% power, 5 second timeout
-            encoderTurn(0.25,-57,5);
-            encoderDrive(0.75,5,5);
+            encoderDrive(0.2, -20, 5); // Drive backward 26 inches at 50% power, 5 second timeout
             shootBalls();
-
         }
     }
 
@@ -215,8 +208,9 @@ public class Auton extends LinearOpMode {
     }
 
     private void shootBalls(){
-        outakeMotor.setPower(0.7);
-        sleep(3000);
+        outakeMotor.setPower(0.6);
+        sleep(5000);
+        //open the gate to launch the balls
         artifactGate.setPosition(0.25);
         sleep(8000);
         outakeMotor.setPower(0);
