@@ -66,7 +66,6 @@ public class MechanumDriveCode extends LinearOpMode {
         }
     }
 
-
     public void initialization() {
         // Initialization
         flMotor = hardwareMap.get(DcMotorEx.class, "flMotor");
@@ -86,8 +85,6 @@ public class MechanumDriveCode extends LinearOpMode {
         frMotor.setZeroPowerBehavior(DcMotorEx.ZeroPowerBehavior.BRAKE);
         blMotor.setZeroPowerBehavior(DcMotorEx.ZeroPowerBehavior.BRAKE);
         brMotor.setZeroPowerBehavior(DcMotorEx.ZeroPowerBehavior.BRAKE);
-
-
 
     }
 
