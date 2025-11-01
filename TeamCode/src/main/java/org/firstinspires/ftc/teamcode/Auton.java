@@ -37,6 +37,7 @@ public class Auton extends LinearOpMode {
         outakeMotor = hardwareMap.get(DcMotor.class, "outtakeMotor");
         artifactGate = hardwareMap.get(Servo.class,"artifactGate");
         artifactGate.setDirection(Servo.Direction.FORWARD);
+        artifactGate.setPosition(1.0);
 
         // Set motor direction
         flMotor.setDirection(DcMotor.Direction.REVERSE);
@@ -51,11 +52,10 @@ public class Auton extends LinearOpMode {
             encoderDrive(0.25, 83, 5); // Drive forward 24 inches at 50% power, 5 second timeout
             encoderTurn(0.25,-57,5);
             encoderDrive(0.75,5,5);
-            shootball();
+            shootBalls();
 
         }
     }
-
 
     private void resetEncoders() {
         DcMotor[] motors = {flMotor, frMotor, blMotor, brMotor};
@@ -64,7 +64,6 @@ public class Auton extends LinearOpMode {
             motor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
         }
     }
-
 
     private void encoderStrafe(double speed, double inches, double timeoutS) {
 
@@ -111,9 +110,6 @@ public class Auton extends LinearOpMode {
         blMotor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
         brMotor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
     }
-
-
-
 
     private void encoderDrive(double speed, double inches, double timeoutS) {
         int newLeftFrontTarget = flMotor.getCurrentPosition() + (int)(inches * COUNTS_PER_INCH);
@@ -218,21 +214,13 @@ public class Auton extends LinearOpMode {
         brMotor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
     }
 
-
-    private void shootball(){
-
+    private void shootBalls(){
         outakeMotor.setPower(0.7);
         sleep(3000);
-
-        artifactGate.setPosition(1);
-
-        sleep(8000);
-
-        outakeMotor.setPower(0);
-
         artifactGate.setPosition(0.25);
+        sleep(8000);
+        outakeMotor.setPower(0);
     }
-
 
     private void stopAllMotors() {
         flMotor.setPower(0);
