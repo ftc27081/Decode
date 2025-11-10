@@ -45,8 +45,9 @@ public class DepotZone extends LinearOpMode {
         waitForStart();
 
         if (opModeIsActive()) {
-            encoderDrive(0.2, -20, 5); // Drive backward 26 inches at 50% power, 5 second timeout
+            encoderDrive(0.5, -20, 5); // Drive backward 26 inches at 50% power, 5 second timeout
             shootBalls();
+            encoderStrafe(0.5,172,5); // move out of zone after shooting
         }
     }
 
@@ -196,6 +197,7 @@ public class DepotZone extends LinearOpMode {
             telemetry.addData("Turning", "%.1f degrees", degrees);
             telemetry.update();
         }
+
 
         // Stop all motion
         stopAllMotors();

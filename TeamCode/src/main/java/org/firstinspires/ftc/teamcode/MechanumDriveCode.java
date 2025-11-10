@@ -49,7 +49,7 @@ public class MechanumDriveCode extends LinearOpMode {
            outakeMotor.setPower(0.5);
         }
         if(gamepad2.b) {
-            outakeMotor.setPower(-0.5);
+            outakeMotor.setPower(-1);
         }
         if (gamepad2.x){
             outakeMotor.setPower(0);
@@ -63,6 +63,14 @@ public class MechanumDriveCode extends LinearOpMode {
         }
         if(gamepad2.left_bumper) {
             artifactGate.setPosition(1.0);
+        }
+    }
+
+    public void unStuckBall(){
+        if (gamepad2.y){
+            outakeMotor.setPower(1);
+            sleep(2000);
+            outakeMotor.setPower(0);
         }
     }
 
@@ -101,6 +109,7 @@ public class MechanumDriveCode extends LinearOpMode {
             this.drive();
             this.outake();
             this.release();
+            this.unStuckBall();
             telemetry.update();
         }
     }
