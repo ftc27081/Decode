@@ -2,16 +2,18 @@ package org.firstinspires.ftc.teamcode;
 
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
+import com.qualcomm.robotcore.hardware.CRServo;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.Servo;
 
-@TeleOp(name="Mechanum DriveCode")
-public class MechanumDriveCode extends LinearOpMode {
+@TeleOp(name="Mechanum DriveCodebot2")
+public class MechanumDriveCodebot2 extends LinearOpMode {
     private DcMotorEx flMotor, frMotor, blMotor, brMotor;
-    private DcMotor outakeMotor;
-    private Servo artifactGate;
+    private CRServo intakeservoleft, intakeservoright;
+
+    private DcMotor rshotMotor,lshotMotor;
 
     public void drive() {
         //get joystick values
@@ -44,35 +46,41 @@ public class MechanumDriveCode extends LinearOpMode {
 
     }
 
+    public void intake() {
+        if (gamepad2.rightBumperWasPressed()){
+           intakeservoright.setPower(0.5);
+           intakeservoleft.setPower(-0.5);
+        }
+        if(gamepad2.leftBumperWasPressed()) {
+            intakeservoleft.setPower(-0.5);
+            intakeservoright.setPower(0.5);
+        }
+        if (gamepad2.y){
+            intakeservoright.setPower(0);
+            intakeservoleft.setPower(0);
+        }
+    }
+
     public void outake() {
-        if (gamepad2.a){
-           outakeMotor.setPower(0.5);
+        if (gamepad1.a){
+            rshotMotor.setPower(0.35);
+            lshotMotor.setPower(-0.35);
         }
         if(gamepad2.b) {
-            outakeMotor.setPower(-.01);
+            rshotMotor.setPower(-.01);
+            lshotMotor.setPower(0.01);
         }
         if (gamepad2.x){
-            outakeMotor.setPower(0);
+            rshotMotor.setPower(0);
+            lshotMotor.setPower(-0);
         }
     }
 
-    public void release() {
 
-        if (gamepad2.right_bumper) {
-            artifactGate.setPosition(0.25);
-        }
-        if(gamepad2.left_bumper) {
-            artifactGate.setPosition(1.0);
-        }
-    }
 
-    public void unStuckBall(){
-        if (gamepad2.y){
-            outakeMotor.setPower(1);
-            sleep(2000);
-            outakeMotor.setPower(0);
-        }
-    }
+
+
+
 
     public void initialization() {
         // Initialization
@@ -80,15 +88,15 @@ public class MechanumDriveCode extends LinearOpMode {
         frMotor = hardwareMap.get(DcMotorEx.class, "frMotor");
         blMotor = hardwareMap.get(DcMotorEx.class, "blMotor");
         brMotor = hardwareMap.get(DcMotorEx.class, "brMotor");
-        outakeMotor = hardwareMap.get(DcMotor.class, "outtakeMotor");
-        artifactGate = hardwareMap.get(Servo.class,"artifactGate");
-        artifactGate.setDirection(Servo.Direction.FORWARD);
-        artifactGate.setPosition(1.0);
+        intakeservoright = hardwareMap.get(CRServo.class,"rightservo");
+        intakeservoleft = hardwareMap.get(CRServo.class,"leftservo");
+        rshotMotor = hardwareMap.get(DcMotorEx.class, "rightMotor");
+        lshotMotor = hardwareMap.get(DcMotorEx.class, "leftMotor");
+
 
         frMotor.setDirection(DcMotorSimple.Direction.REVERSE);
         brMotor.setDirection(DcMotorSimple.Direction.REVERSE);
 
-        outakeMotor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         flMotor.setZeroPowerBehavior(DcMotorEx.ZeroPowerBehavior.BRAKE);
         frMotor.setZeroPowerBehavior(DcMotorEx.ZeroPowerBehavior.BRAKE);
         blMotor.setZeroPowerBehavior(DcMotorEx.ZeroPowerBehavior.BRAKE);
@@ -108,8 +116,7 @@ public class MechanumDriveCode extends LinearOpMode {
         while (opModeIsActive()) {
             this.drive();
             this.outake();
-            this.release();
-            this.unStuckBall();
+            this.intake();
             telemetry.update();
         }
     }

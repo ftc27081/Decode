@@ -8,8 +8,8 @@ import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
 
-@Autonomous(name = "Depot Zone", group = "Autonomous")
-public class DepotZone extends LinearOpMode {
+@Autonomous(name = "Depot Zone Blue", group = "Autonomous")
+public class DepotZoneBlue extends LinearOpMode {
 
     private DcMotorEx flMotor, frMotor, blMotor, brMotor;
     private DcMotor outakeMotor;
@@ -45,9 +45,9 @@ public class DepotZone extends LinearOpMode {
         waitForStart();
 
         if (opModeIsActive()) {
-            encoderDrive(0.5, -20, 5); // Drive backward 26 inches at 50% power, 5 second timeout
+            encoderDrive(0.5,  20, 5); // Drive backward 26 inches at 50% power, 5 second timeout
             shootBalls();
-            encoderStrafe(0.5,172,5); // move out of zone after shooting
+            encoderStrafe(0.5,17,5); // move out of zone after shooting
         }
     }
 
