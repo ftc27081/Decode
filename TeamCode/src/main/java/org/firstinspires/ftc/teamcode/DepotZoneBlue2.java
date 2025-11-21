@@ -213,7 +213,6 @@ public class DepotZoneBlue2 extends LinearOpMode {
         outakeMotor.setPower(0.6);
         sleep(5000);
         //open the gate to launch the balls
-        artifactGate.setPosition(0.25);
         sleep(8000);
         outakeMotor.setPower(0);
     }
