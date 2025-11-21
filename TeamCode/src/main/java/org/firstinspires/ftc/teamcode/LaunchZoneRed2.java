@@ -1,4 +1,3 @@
-
 package org.firstinspires.ftc.teamcode;
 
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
@@ -9,8 +8,8 @@ import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
 
-@Autonomous(name = "Depot Zone Red", group = "Autonomous")
-public class DepotZoneRed extends LinearOpMode {
+@Autonomous(name = "Launch Zone Red 2", group = "Autonomous")
+public class LaunchZoneRed2 extends LinearOpMode {
 
     private DcMotorEx flMotor, frMotor, blMotor, brMotor;
     private DcMotor outakeMotor;
@@ -46,9 +45,11 @@ public class DepotZoneRed extends LinearOpMode {
         waitForStart();
 
         if (opModeIsActive()) {
-            encoderDrive(0.5, 20, 5); // Drive backward 26 inches at 50% power, 5 second timeout
+            encoderDrive(0.4, 85, 5); // Drive forward 24 inches at 50% power, 5 second timeout
+            encoderTurn(0.25,65,5);
+            encoderDrive(0.2,17,5);
             shootBalls();
-            encoderStrafe(0.5,-17,5); // move out of zone after shooting
+
         }
     }
 
@@ -198,7 +199,6 @@ public class DepotZoneRed extends LinearOpMode {
             telemetry.addData("Turning", "%.1f degrees", degrees);
             telemetry.update();
         }
-
 
         // Stop all motion
         stopAllMotors();

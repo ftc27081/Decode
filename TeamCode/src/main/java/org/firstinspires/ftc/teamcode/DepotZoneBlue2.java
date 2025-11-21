@@ -8,8 +8,8 @@ import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
 
-@Autonomous(name = "Depot Zone Blue", group = "Autonomous")
-public class DepotZoneBlue extends LinearOpMode {
+@Autonomous(name = "Depot Zone Blue 2", group = "Autonomous")
+public class DepotZoneBlue2 extends LinearOpMode {
 
     private DcMotorEx flMotor, frMotor, blMotor, brMotor;
     private DcMotor outakeMotor;
@@ -215,6 +215,12 @@ public class DepotZoneBlue extends LinearOpMode {
         //open the gate to launch the balls
         artifactGate.setPosition(0.25);
         sleep(8000);
+        outakeMotor.setPower(0);
+    }
+
+    private void shootBalls2(){
+        outakeMotor.setPower(0.35);
+        sleep(5000);
         outakeMotor.setPower(0);
     }
 

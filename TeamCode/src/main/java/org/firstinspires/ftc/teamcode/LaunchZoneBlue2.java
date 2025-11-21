@@ -10,8 +10,8 @@ import com.qualcomm.robotcore.util.ElapsedTime;
 
 
 
-@Autonomous(name = "Launch Zone Blue ", group = "Autonomous")
-public class LaunchZoneBlue extends LinearOpMode {
+@Autonomous(name = "Launch Zone Blue 2", group = "Autonomous")
+public class LaunchZoneBlue2 extends LinearOpMode {
 
     private DcMotorEx flMotor, frMotor, blMotor, brMotor;
     private DcMotor outakeMotor;
