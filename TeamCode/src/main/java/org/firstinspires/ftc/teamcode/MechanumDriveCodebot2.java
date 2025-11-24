@@ -4,16 +4,74 @@ import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.CRServo;
 import com.qualcomm.robotcore.hardware.DcMotor;
-import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
-import com.qualcomm.robotcore.hardware.Servo;
+import com.qualcomm.robotcore.util.ElapsedTime;
 
-@TeleOp(name="Mechanum DriveCodebot2")
+import com.qualcomm.robotcore.hardware.DcMotorEx;
+
+
+@TeleOp (name="Slide Move by Inches")
+
 public class MechanumDriveCodebot2 extends LinearOpMode {
     private DcMotorEx flMotor, frMotor, blMotor, brMotor;
-    private CRServo intakeservoleft, intakeservoright;
+        private CRServo intakeservoleft, intakeservoright;
+    private DcMotor slideMotor1 = null;
+    private DcMotor slideMotor2 = null;
 
-    private DcMotor rshotMotor,lshotMotor;
+
+    private ElapsedTime runtime = new ElapsedTime(); // <-- Add this line
+
+        private DcMotor rshotMotor,lshotMotor;
+        static final double COUNTS_PER_MOTOR_REV = 1440; // Example: AndyMark NeveRest 60 motor
+        static final double DRIVE_GEAR_REDUCTION = 1.0;  // This is the gear ratio
+        static final double SPOOL_DIAMETER_INCHES = 1.5; // Diameter of the spool in inches
+        static final double COUNTS_PER_INCH = (COUNTS_PER_MOTOR_REV * DRIVE_GEAR_REDUCTION) / (SPOOL_DIAMETER_INCHES * Math.PI);
+        static final double SLIDE_POWER = 0.5;
+
+
+
+    @Override
+    public void runOpMode() {
+
+
+        flMotor = hardwareMap.get(DcMotorEx.class, "flMotor");
+        frMotor = hardwareMap.get(DcMotorEx.class, "frMotor");
+        blMotor = hardwareMap.get(DcMotorEx.class, "blMotor");
+        brMotor = hardwareMap.get(DcMotorEx.class, "brMotor");
+
+        slideMotor1 = hardwareMap.get(DcMotorEx.class, "slide_motor");
+        slideMotor2 = hardwareMap.get(DcMotorEx.class, "slide_motor");
+
+
+        slideMotor1.setDirection(DcMotorSimple.Direction.REVERSE);
+        slideMotor2.setDirection(DcMotorSimple.Direction.REVERSE);
+        frMotor.setDirection(DcMotorSimple.Direction.REVERSE);
+        brMotor.setDirection(DcMotorSimple.Direction.REVERSE);
+        slideMotor1.setDirection(DcMotorSimple.Direction.REVERSE);
+        slideMotor2.setDirection(DcMotorSimple.Direction.REVERSE);
+
+
+        flMotor.setZeroPowerBehavior(DcMotorEx.ZeroPowerBehavior.BRAKE);
+        frMotor.setZeroPowerBehavior(DcMotorEx.ZeroPowerBehavior.BRAKE);
+        blMotor.setZeroPowerBehavior(DcMotorEx.ZeroPowerBehavior.BRAKE);
+        brMotor.setZeroPowerBehavior(DcMotorEx.ZeroPowerBehavior.BRAKE);
+
+        slideMotor1.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        slideMotor1.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+
+        slideMotor2.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        slideMotor2.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+
+        telemetry.addData("Status", "Initialized");
+        telemetry.update();
+
+        waitForStart();
+
+        moveSlideInches(10, SLIDE_POWER, 5.0);
+
+        telemetry.addData("Status", "Done");
+        telemetry.update();
+    }
 
     public void drive() {
         //get joystick values
@@ -45,79 +103,50 @@ public class MechanumDriveCodebot2 extends LinearOpMode {
         telemetry.update();
 
     }
+    public void moveSlideInches(double inches, double power, double timeoutS) {
+        int newTargetPosition;
 
-    public void intake() {
-        if (gamepad2.rightBumperWasPressed()){
-            intakeservoright.setPower(0.5);
-            intakeservoleft.setPower(-0.5);
-        }
-        if(gamepad2.leftBumperWasPressed()) {
-            intakeservoleft.setPower(-0.5);
-            intakeservoright.setPower(0.5);
-        }
-        if (gamepad2.y){
-            intakeservoright.setPower(0);
-            intakeservoleft.setPower(0);
-        }
-    }
+        // Ensure that the opmode is still active
+        if (opModeIsActive()) {
 
-    public void outake() {
-        if (gamepad1.a){
-            rshotMotor.setPower(0.35);
-            lshotMotor.setPower(-0.35);
-        }
-        if(gamepad2.b) {
-            rshotMotor.setPower(-.01);
-            lshotMotor.setPower(0.01);
-        }
-        if (gamepad2.x){
-            rshotMotor.setPower(0);
-            lshotMotor.setPower(-0);
-        }
-    }
+            // Calculate the new target position
+            newTargetPosition = slideMotor1.getCurrentPosition() + (int)(inches * COUNTS_PER_INCH);
+            slideMotor1.setTargetPosition(newTargetPosition);
+
+            newTargetPosition = slideMotor2.getCurrentPosition() + (int)(inches * COUNTS_PER_INCH);
+            slideMotor2.setTargetPosition(newTargetPosition);
 
 
+            // Turn On RUN_TO_POSITION
+            slideMotor1.setMode(DcMotor.RunMode.RUN_TO_POSITION);
 
+            slideMotor2.setMode(DcMotor.RunMode.RUN_TO_POSITION);
 
+            // Start the motion.
+            runtime.reset();
+            slideMotor1.setPower(Math.abs(power));
+            slideMotor2.setPower(Math.abs(power));
 
+            // Keep looping while not at position, and the opmode is active, and the timeout has not been reached
+            while (opModeIsActive() && runtime.seconds() < timeoutS && (slideMotor1.isBusy()) &&(slideMotor2.isBusy())) {
+                // Display it for the driver.
+                telemetry.addData("Path1", "Running to %7d", newTargetPosition);
+                telemetry.addData("Path2", "Running at %7d", slideMotor1.getCurrentPosition());
+                telemetry.addData("Path2", "Running at %7d", slideMotor2.getCurrentPosition());
+                telemetry.update();
+            }
 
+            // Stop all motion
+            slideMotor1.setPower(0);
+            slideMotor2.setPower(0);
 
-    public void initialization() {
-        // Initialization
-        flMotor = hardwareMap.get(DcMotorEx.class, "flMotor");
-        frMotor = hardwareMap.get(DcMotorEx.class, "frMotor");
-        blMotor = hardwareMap.get(DcMotorEx.class, "blMotor");
-        brMotor = hardwareMap.get(DcMotorEx.class, "brMotor");
-        intakeservoright = hardwareMap.get(CRServo.class,"rightservo");
-        intakeservoleft = hardwareMap.get(CRServo.class,"leftservo");
-        rshotMotor = hardwareMap.get(DcMotorEx.class, "rightMotor");
-        lshotMotor = hardwareMap.get(DcMotorEx.class, "leftMotor");
+            // Turn off RUN_TO_POSITION mode
+            slideMotor1.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+            slideMotor2.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
 
-
-        frMotor.setDirection(DcMotorSimple.Direction.REVERSE);
-        brMotor.setDirection(DcMotorSimple.Direction.REVERSE);
-
-        flMotor.setZeroPowerBehavior(DcMotorEx.ZeroPowerBehavior.BRAKE);
-        frMotor.setZeroPowerBehavior(DcMotorEx.ZeroPowerBehavior.BRAKE);
-        blMotor.setZeroPowerBehavior(DcMotorEx.ZeroPowerBehavior.BRAKE);
-        brMotor.setZeroPowerBehavior(DcMotorEx.ZeroPowerBehavior.BRAKE);
-
-    }
-
-    public void runOpMode() {
-        // init
-        initialization();
-
-        // create multiple telemetries and add to dashboard
-        telemetry.addData("Status", "Waiting");
-        telemetry.update();
-        waitForStart();
-
-        while (opModeIsActive()) {
             this.drive();
-            this.outake();
-            this.intake();
-            telemetry.update();
+            this.moveSlideInches(9.2,0.5,5);
+
         }
     }
 }
