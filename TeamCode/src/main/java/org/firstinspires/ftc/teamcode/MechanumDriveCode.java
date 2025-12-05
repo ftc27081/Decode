@@ -10,7 +10,7 @@ import com.qualcomm.robotcore.hardware.Servo;
 @TeleOp(name="Mechanum DriveCode")
 public class MechanumDriveCode extends LinearOpMode {
     private DcMotorEx flMotor, frMotor, blMotor, brMotor;
-    private DcMotor outakeMotor;
+    private DcMotor outakeMotor, slideMotor1,slideMotor2;
     private Servo artifactGate;
 
     public void drive() {
@@ -74,6 +74,20 @@ public class MechanumDriveCode extends LinearOpMode {
         }
     }
 
+    public void park(){
+
+        if (gamepad1.dpad_up){
+            slideMotor1.setPower(0.5);
+            slideMotor2.setPower(0.5);
+            sleep(7500);
+
+        }
+
+    }
+
+
+
+
     public void initialization() {
         // Initialization
         flMotor = hardwareMap.get(DcMotorEx.class, "flMotor");
@@ -81,6 +95,9 @@ public class MechanumDriveCode extends LinearOpMode {
         blMotor = hardwareMap.get(DcMotorEx.class, "blMotor");
         brMotor = hardwareMap.get(DcMotorEx.class, "brMotor");
         outakeMotor = hardwareMap.get(DcMotor.class, "outtakeMotor");
+        slideMotor1 = hardwareMap.get(DcMotor.class, "slideMotor1");
+        slideMotor2 = hardwareMap.get(DcMotor.class, "slideMotor2");
+
         artifactGate = hardwareMap.get(Servo.class,"artifactGate");
         artifactGate.setDirection(Servo.Direction.FORWARD);
         artifactGate.setPosition(1.0);
