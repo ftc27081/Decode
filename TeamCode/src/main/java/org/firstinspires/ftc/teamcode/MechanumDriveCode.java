@@ -24,20 +24,16 @@ public class MechanumDriveCode extends LinearOpMode {
     private Servo artifactGate;
 
     public void drive() {
-
-
-
             //get joystick values
             double yPower = 0.7 * gamepad1.left_stick_y;   // forward and back
             double yaw = 0.7 * gamepad1.right_stick_x;  // turning
             double xPower = 0.7 * gamepad1.left_stick_x;   // drive
 
             //calculate powers
-            double flPower = yPower + xPower + yaw;
-            double frPower = yPower - xPower - yaw;
-            double blPower = yPower - xPower + yaw;
-            double brPower = yPower + xPower - yaw;
-
+            double frPower = yPower + xPower + yaw;
+            double flPower = yPower - xPower - yaw;
+            double brPower = yPower - xPower + yaw;
+            double blPower = yPower + xPower - yaw;
 
             double maxPower = Math.max(Math.max(Math.abs(flPower), Math.abs(frPower)), Math.max(Math.abs(blPower), Math.abs(brPower)));
             if (maxPower > 1.0) {
@@ -54,11 +50,6 @@ public class MechanumDriveCode extends LinearOpMode {
 
             telemetry.addData("Motor power is set", "%.3f %.3f %.3f %.3f ", flPower, frPower, blPower, brPower);
             telemetry.update();
-
-
-
-
-
 
     }
 
@@ -77,7 +68,7 @@ public class MechanumDriveCode extends LinearOpMode {
     public void release() {
 
         if (gamepad2.right_bumper) {
-            artifactGate.setPosition(0.25);
+            artifactGate.setPosition(0.6);
         }
         if(gamepad2.left_bumper) {
             artifactGate.setPosition(1.0);
@@ -135,7 +126,12 @@ public class MechanumDriveCode extends LinearOpMode {
 
     }
 
-
+    public void logData() {
+        if(gamepad1.b) {
+            telemetry.addData("left motor:", slideMotor1.getCurrentPosition());
+            telemetry.addData("right motor:", slideMotor2.getCurrentPosition());
+        }
+    }
 
 
     public void initialization() {
@@ -165,14 +161,15 @@ public class MechanumDriveCode extends LinearOpMode {
         slideMotor1.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
         slideMotor2.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
 
-        slideMotor1.setTargetPosition(-1);
-        slideMotor2.setTargetPosition(-1);
+        slideMotor1.setTargetPosition(slideMotor1.getCurrentPosition()-1);
+        slideMotor2.setTargetPosition(slideMotor2.getCurrentPosition()-1);
 
         slideMotor2.setMode(DcMotor.RunMode.RUN_TO_POSITION);
         slideMotor1.setMode(DcMotor.RunMode.RUN_TO_POSITION);
 
         slideMotor1.setPower(-0.1);
         slideMotor2.setPower(-0.1);
+
 
 
     }
@@ -191,7 +188,8 @@ public class MechanumDriveCode extends LinearOpMode {
             this.outake();
             this.release();
             this.unStuckBall();
-            this.park(8, 0.5);
+            this.park(8, 1);
+            this.logData();
             telemetry.update();
         }
     }
