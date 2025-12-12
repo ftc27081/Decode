@@ -48,7 +48,7 @@ public class DepotZoneRed extends LinearOpMode {
         if (opModeIsActive()) {
             encoderDrive(0.5, -20, 5); // Drive backward 26 inches at 50% power, 5 second timeout
             shootBalls();
-            encoderStrafe(0.5,17,5); // move out of zone after shooting
+            encoderStrafe(0.5,20,5); // move out of zone after shooting
         }
     }
 

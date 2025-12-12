@@ -24,32 +24,32 @@ public class MechanumDriveCode extends LinearOpMode {
     private Servo artifactGate;
 
     public void drive() {
-            //get joystick values
-            double yPower = 0.7 * gamepad1.left_stick_y;   // forward and back
-            double yaw = 0.7 * gamepad1.right_stick_x;  // turning
-            double xPower = 0.7 * gamepad1.left_stick_x;   // drive
+        //get joystick values
+        double yPower = 0.7 * gamepad1.left_stick_y;   // forward and back
+        double yaw = 0.7 * gamepad1.right_stick_x;  // turning
+        double xPower = 0.7 * gamepad1.left_stick_x;   // drive
 
-            //calculate powers
-            double frPower = yPower + xPower + yaw;
-            double flPower = yPower - xPower - yaw;
-            double brPower = yPower - xPower + yaw;
-            double blPower = yPower + xPower - yaw;
+        //calculate powers
+        double frPower = yPower + xPower + yaw;
+        double flPower = yPower - xPower - yaw;
+        double brPower = yPower - xPower + yaw;
+        double blPower = yPower + xPower - yaw;
 
-            double maxPower = Math.max(Math.max(Math.abs(flPower), Math.abs(frPower)), Math.max(Math.abs(blPower), Math.abs(brPower)));
-            if (maxPower > 1.0) {
-                flPower /= maxPower;
-                blPower /= maxPower;
-                frPower /= maxPower;
-                brPower /= maxPower;
-            }
+        double maxPower = Math.max(Math.max(Math.abs(flPower), Math.abs(frPower)), Math.max(Math.abs(blPower), Math.abs(brPower)));
+        if (maxPower > 1.0) {
+            flPower /= maxPower;
+            blPower /= maxPower;
+            frPower /= maxPower;
+            brPower /= maxPower;
+        }
 
-            flMotor.setPower(flPower);
-            frMotor.setPower(frPower);
-            blMotor.setPower(blPower);
-            brMotor.setPower(brPower);
+        flMotor.setPower(flPower);
+        frMotor.setPower(frPower);
+        blMotor.setPower(blPower);
+        brMotor.setPower(brPower);
 
-            telemetry.addData("Motor power is set", "%.3f %.3f %.3f %.3f ", flPower, frPower, blPower, brPower);
-            telemetry.update();
+        telemetry.addData("Motor power is set", "%.3f %.3f %.3f %.3f ", flPower, frPower, blPower, brPower);
+        telemetry.update();
 
     }
 
@@ -94,14 +94,14 @@ public class MechanumDriveCode extends LinearOpMode {
 
         if (gamepad1.a && Buttonpressrise==false ){
 
-        slideMotor2.setTargetPosition(slideMotor2Target);
-        slideMotor1.setTargetPosition(slideMotor1Target);
+            slideMotor2.setTargetPosition(slideMotor2Target);
+            slideMotor1.setTargetPosition(slideMotor1Target);
 
-        slideMotor2.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-        slideMotor1.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+            slideMotor2.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+            slideMotor1.setMode(DcMotor.RunMode.RUN_TO_POSITION);
 
-        slideMotor1.setPower(speed);
-        slideMotor2.setPower(speed);
+            slideMotor1.setPower(speed);
+            slideMotor2.setPower(speed);
 
         }
 
