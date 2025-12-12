@@ -45,9 +45,9 @@ public class DepotZoneBlue extends LinearOpMode {
         waitForStart();
 
         if (opModeIsActive()) {
-            encoderDrive(0.5,  20, 5); // Drive backward 26 inches at 50% power, 5 second timeout
+            encoderDrive(0.5,  -20, 5); // Drive backward 26 inches at 50% power, 5 second timeout
             shootBalls();
-            encoderStrafe(0.5,17,5); // move out of zone after shooting
+            encoderStrafe(0.5,-17,5); // move out of zone after shooting
         }
     }
 
@@ -210,10 +210,10 @@ public class DepotZoneBlue extends LinearOpMode {
     }
 
     private void shootBalls(){
-        outakeMotor.setPower(0.6);
+        outakeMotor.setPower(0.5);
         sleep(5000);
         //open the gate to launch the balls
-        artifactGate.setPosition(0.25);
+        artifactGate.setPosition(0.6);
         sleep(8000);
         outakeMotor.setPower(0);
     }
