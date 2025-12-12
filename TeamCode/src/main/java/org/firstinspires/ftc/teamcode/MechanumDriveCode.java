@@ -22,7 +22,7 @@ public class MechanumDriveCode extends LinearOpMode {
     static final double COUNTS_PER_INCH = TICKS_PER_REV / (WHEEL_DIAMETER_INCHES * Math.PI);
     private DcMotor outakeMotor, slideMotor1,slideMotor2;
     private Servo artifactGate;
-
+// git test
     public void drive() {
         //get joystick values
         double yPower = 0.7 * gamepad1.left_stick_y;   // forward and back
