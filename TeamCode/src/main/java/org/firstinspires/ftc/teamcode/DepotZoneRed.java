@@ -13,7 +13,7 @@ import com.qualcomm.robotcore.util.ElapsedTime;
 public class DepotZoneRed extends LinearOpMode {
 
     private DcMotorEx flMotor, frMotor, blMotor, brMotor;
-    private DcMotor outakeMotor;
+    private DcMotor outakeMotor,slideMotor1,slideMotor2;;
     private Servo artifactGate;
 
     private ElapsedTime runtime = new ElapsedTime();
@@ -36,6 +36,25 @@ public class DepotZoneRed extends LinearOpMode {
         artifactGate.setDirection(Servo.Direction.FORWARD);
         artifactGate.setPosition(1.0);
 
+        slideMotor1 = hardwareMap.get(DcMotor.class, "leftMotor");
+        slideMotor2 = hardwareMap.get(DcMotor.class, "rightMotor");
+
+
+        slideMotor1.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        slideMotor2.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+
+        slideMotor1.setTargetPosition(slideMotor1.getCurrentPosition()-1);
+        slideMotor2.setTargetPosition(slideMotor2.getCurrentPosition()-1);
+
+        slideMotor2.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+        slideMotor1.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+
+        slideMotor1.setPower(-0.1);
+        slideMotor2.setPower(-0.1);
+        // Set motor direction
+        flMotor.setDirection(DcMotor.Direction.REVERSE);
+        blMotor.setDirection(DcMotor.Direction.REVERSE);
+
         // Set motor direction
         flMotor.setDirection(DcMotor.Direction.REVERSE);
         blMotor.setDirection(DcMotor.Direction.REVERSE);
@@ -46,7 +65,7 @@ public class DepotZoneRed extends LinearOpMode {
         waitForStart();
 
         if (opModeIsActive()) {
-            encoderDrive(0.5, -20, 5); // Drive backward 26 inches at 50% power, 5 second timeout
+            encoderDrive(0.25, -16, 5); // Drive backward 26 inches at 50% power, 5 second timeout
             shootBalls();
             encoderStrafe(0.5,20,5); // move out of zone after shooting
         }
@@ -211,11 +230,12 @@ public class DepotZoneRed extends LinearOpMode {
     }
 
     private void shootBalls(){
-        outakeMotor.setPower(0.5);
-        sleep(5000);
+        outakeMotor.setPower(0.6);
+        sleep(4000);
         //open the gate to launch the balls
-        artifactGate.setPosition(0.6);
-        sleep(8000);
+        artifactGate.setPosition(0.5);
+        encoderDrive(0.3, 5, 0);
+        sleep(2000);
         outakeMotor.setPower(0);
     }
 

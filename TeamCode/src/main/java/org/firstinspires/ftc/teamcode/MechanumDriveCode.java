@@ -4,6 +4,7 @@ import static org.firstinspires.ftc.teamcode.LaunchZoneRed.TICKS_PER_REV;
 
 import static java.util.Collections.max;
 
+import com.acmerobotics.dashboard.config.Config;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.DcMotor;
@@ -11,17 +12,19 @@ import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.Servo;
 
+@Config
 @TeleOp(name="Mechanum DriveCode")
 public class MechanumDriveCode extends LinearOpMode {
 
     private boolean lockMotor = true;
     private boolean Buttonpressrise = false;
     private boolean Buttonpresslower = false;
-    private DcMotorEx flMotor, frMotor, blMotor, brMotor;
+    private DcMotorEx flMotor, frMotor, blMotor, brMotor, outakeMotor;
     static final double WHEEL_DIAMETER_INCHES = 1.504; // adjust for your wheels
     static final double COUNTS_PER_INCH = TICKS_PER_REV / (WHEEL_DIAMETER_INCHES * Math.PI);
-    private DcMotor outakeMotor, slideMotor1,slideMotor2;
+    private DcMotor slideMotor1,slideMotor2;
     private Servo artifactGate;
+    static double omVelocity;
 // git test
     public void drive() {
         //get joystick values
@@ -54,13 +57,18 @@ public class MechanumDriveCode extends LinearOpMode {
     }
 
     public void outake() {
+        omVelocity = outakeMotor.getVelocity();
         if (gamepad2.a){
-            outakeMotor.setPower(0.5);
+            outakeMotor.setVelocity(1250);
+            sleep(1000);
+            outakeMotor.setVelocity(1350);
         }
         if(gamepad2.b) {
-            outakeMotor.setPower(-.01);
+            outakeMotor.setPower(-1);
         }
         if (gamepad2.x){
+            outakeMotor.setPower(-.01);
+            sleep(2000);
             outakeMotor.setPower(0);
         }
     }
@@ -68,7 +76,7 @@ public class MechanumDriveCode extends LinearOpMode {
     public void release() {
 
         if (gamepad2.right_bumper) {
-            artifactGate.setPosition(0.6);
+            artifactGate.setPosition(0.5);
         }
         if(gamepad2.left_bumper) {
             artifactGate.setPosition(1.0);
@@ -78,8 +86,6 @@ public class MechanumDriveCode extends LinearOpMode {
     public void unStuckBall(){
         if (gamepad2.y){
             outakeMotor.setPower(1);
-            sleep(2000);
-            outakeMotor.setPower(0);
         }
     }
 
@@ -140,7 +146,7 @@ public class MechanumDriveCode extends LinearOpMode {
         frMotor = hardwareMap.get(DcMotorEx.class, "frMotor");
         blMotor = hardwareMap.get(DcMotorEx.class, "blMotor");
         brMotor = hardwareMap.get(DcMotorEx.class, "brMotor");
-        outakeMotor = hardwareMap.get(DcMotor.class, "outtakeMotor");
+        outakeMotor = hardwareMap.get(DcMotorEx.class, "outtakeMotor");
         slideMotor1 = hardwareMap.get(DcMotor.class, "leftMotor");
         slideMotor2 = hardwareMap.get(DcMotor.class, "rightMotor");
 
@@ -169,6 +175,8 @@ public class MechanumDriveCode extends LinearOpMode {
 
         slideMotor1.setPower(-0.1);
         slideMotor2.setPower(-0.1);
+        outakeMotor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+
 
 
 
