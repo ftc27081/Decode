@@ -1,21 +1,28 @@
 package org.firstinspires.ftc.teamcode;
 
 import static org.firstinspires.ftc.teamcode.LaunchZoneRed.TICKS_PER_REV;
-
 import static java.util.Collections.max;
-
+import com.acmerobotics.dashboard.FtcDashboard;
 import com.acmerobotics.dashboard.config.Config;
+import com.acmerobotics.dashboard.telemetry.MultipleTelemetry;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.Servo;
+import com.qualcomm.robotcore.util.ElapsedTime;
 
 @Config
 @TeleOp(name="Mechanum DriveCode")
 public class MechanumDriveCode extends LinearOpMode {
 
+
+    ElapsedTime timer = new ElapsedTime();
+    public double lastError = 0;
+    public int runMotor = 0;
+    public static double p = 0.001, i = 0.001, d = 0.0001, f = 0.00036;
+    public static double targetvalue = 1250;
     private boolean lockMotor = true;
     private boolean Buttonpressrise = false;
     private boolean Buttonpresslower = false;
@@ -32,7 +39,7 @@ public class MechanumDriveCode extends LinearOpMode {
         double yaw = 0.7 * gamepad1.right_stick_x;  // turning
         double xPower = 0.7 * gamepad1.left_stick_x;   // drive
 
-        //calculate powers
+        //calculate powersf
         double frPower = yPower + xPower + yaw;
         double flPower = yPower - xPower - yaw;
         double brPower = yPower - xPower + yaw;
@@ -51,21 +58,51 @@ public class MechanumDriveCode extends LinearOpMode {
         blMotor.setPower(blPower);
         brMotor.setPower(brPower);
 
-        telemetry.addData("Motor power is set", "%.3f %.3f %.3f %.3f ", flPower, frPower, blPower, brPower);
-        telemetry.update();
 
     }
+    public void wheelVelocity(DcMotorEx motor, double targetVelocity) {
 
-    public void outake() {
-        omVelocity = outakeMotor.getVelocity();
-        if (gamepad2.a){
-            outakeMotor.setVelocity(1250);
-            sleep(1000);
-            outakeMotor.setVelocity(1350);
-        }
-        if(gamepad2.b) {
-            outakeMotor.setPower(-1);
-        }
+     if (gamepad2.a) {
+         sleep(2000);
+         timer.reset();
+         double milliseconds = timer.milliseconds();
+         timer.reset();
+         double power;
+
+         double currentVelocity = motor.getVelocity();
+         double error = targetVelocity - currentVelocity;
+         //calculate p component
+         double pComponent = error * p;
+
+         //calculate i component
+         double integralSum = error * milliseconds;
+         double iComponent = integralSum * i;
+
+         //calculate d component
+         double dComponent = (error - lastError) / milliseconds;
+
+         power = pComponent + iComponent + dComponent;
+         outakeMotor.setPower(power);
+         lastError = error;
+
+
+         telemetry.addData("p", p);
+         telemetry.addData("i", i);
+         telemetry.addData("d", d);
+         telemetry.addData("feed forword", f);
+         telemetry.addData("targetVelocity", targetvalue);
+         telemetry.addData("Current Velocity", outakeMotor.getVelocity());
+         telemetry.addData("p component",pComponent);
+         telemetry.addData("i component",iComponent);
+         telemetry.addData("d component",dComponent);
+
+
+     }
+    }
+
+
+
+    public void powerControl() {
         if (gamepad2.x){
             outakeMotor.setPower(-.01);
             sleep(2000);
@@ -89,48 +126,6 @@ public class MechanumDriveCode extends LinearOpMode {
         }
     }
 
-    public void park(double inches,double speed) {
-
-
-        int moveCounts = (int) (inches * COUNTS_PER_INCH);
-
-
-        int slideMotor1Target = slideMotor1.getCurrentPosition() - moveCounts;
-        int slideMotor2Target = slideMotor2.getCurrentPosition() - moveCounts;
-
-        if (gamepad1.a && Buttonpressrise==false ){
-
-            slideMotor2.setTargetPosition(slideMotor2Target);
-            slideMotor1.setTargetPosition(slideMotor1Target);
-
-            slideMotor2.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-            slideMotor1.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-
-            slideMotor1.setPower(speed);
-            slideMotor2.setPower(speed);
-
-        }
-
-       /* if (gamepad1.b && Buttonpresslower == false){
-
-            slideMotor2.setTargetPosition(0);
-            slideMotor1.setTargetPosition(0);
-
-            slideMotor2.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-            slideMotor1.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-            telemetry.addData("Motor Position", slideMotor2.getCurrentPosition());
-            telemetry.update();
-            slideMotor1.setPower(speed);
-            slideMotor2.setPower(speed);
-
-
-           Buttonpresslower = true;
-        }
-
-           */
-
-
-    }
 
     public void logData() {
         if(gamepad1.b) {
@@ -177,7 +172,7 @@ public class MechanumDriveCode extends LinearOpMode {
         slideMotor2.setPower(-0.1);
         outakeMotor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
 
-
+        telemetry = new MultipleTelemetry(telemetry,FtcDashboard.getInstance().getTelemetry());
 
 
     }
@@ -192,12 +187,12 @@ public class MechanumDriveCode extends LinearOpMode {
         waitForStart();
 
         while (opModeIsActive()) {
-            this.drive();
-            this.outake();
-            this.release();
-            this.unStuckBall();
-            this.park(8, 1);
-            this.logData();
+            this.drive();// drive
+            this.powerControl(); // stop and set power for shooter
+            this.release();      // open and close gate
+            this.unStuckBall();  // unstuck ball
+            this.logData();      // adds data to telemetry
+            this.wheelVelocity(outakeMotor,targetvalue); // reset the lost power
             telemetry.update();
         }
     }
