@@ -63,7 +63,7 @@ public class MechanumDriveCode extends LinearOpMode {
     public void wheelVelocity(DcMotorEx motor, double targetVelocity) {
 
      if (gamepad2.a) {
-         sleep(2000);
+         sleep(1750);
          timer.reset();
          double milliseconds = timer.milliseconds();
          timer.reset();
