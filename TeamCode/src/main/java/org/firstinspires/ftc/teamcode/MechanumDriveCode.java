@@ -18,21 +18,23 @@ import com.qualcomm.robotcore.util.ElapsedTime;
 public class MechanumDriveCode extends LinearOpMode {
 
 
+    double lastError = 0;
+    double integralSum = 0;
     ElapsedTime timer = new ElapsedTime();
-    public double lastError = 0;
     public int runMotor = 0;
-    public static double p = 0.001, i = 0.001, d = 0.0001, f = 0.00036;
-    public static double targetvalue = 1250;
-    private boolean lockMotor = true;
-    private boolean Buttonpressrise = false;
-    private boolean Buttonpresslower = false;
+    public static double p = 0;
+    public static double i = 0;
+    public static double d = 0;
+    public static double f = 0;
+
+    public static double targetvalue = 10;
+
     private DcMotorEx flMotor, frMotor, blMotor, brMotor, outakeMotor;
     static final double WHEEL_DIAMETER_INCHES = 1.504; // adjust for your wheels
     static final double COUNTS_PER_INCH = TICKS_PER_REV / (WHEEL_DIAMETER_INCHES * Math.PI);
     private DcMotor slideMotor1,slideMotor2;
     private Servo artifactGate;
-    static double omVelocity;
-// git test
+
     public void drive() {
         //get joystick values
         double yPower = 0.7 * gamepad1.left_stick_y;   // forward and back
@@ -62,51 +64,64 @@ public class MechanumDriveCode extends LinearOpMode {
     }
     public void wheelVelocity(DcMotorEx motor, double targetVelocity) {
 
-     if (gamepad2.a) {
-         sleep(1750);
-         timer.reset();
-         double milliseconds = timer.milliseconds();
-         timer.reset();
-         double power;
+        double currentVelocity = motor.getVelocity();
+        double error = targetVelocity - currentVelocity;
 
-         double currentVelocity = motor.getVelocity();
-         double error = targetVelocity - currentVelocity;
-         //calculate p component
-         double pComponent = error * p;
+        double dt = timer.seconds();
+        timer.reset();
 
-         //calculate i component
-         double integralSum = error * milliseconds;
-         double iComponent = integralSum * i;
+        telemetry.addData("Seconds passed", dt);
+        telemetry.addData("milisceonds passed",dt*0.0001);
+        telemetry.update();
 
-         //calculate d component
-         double dComponent = (error - lastError) / milliseconds;
+        // Protect against divide-by-zero
+        if (dt <= 0) return;
 
-         power = pComponent + iComponent + dComponent;
-         outakeMotor.setPower(power);
-         lastError = error;
+        // ----- FEEDFORWARD -----
+        double fComponent = f * targetVelocity;
 
+        // ----- PROPORTIONAL -----
+        double pComponent = p * error;
 
-         telemetry.addData("p", p);
-         telemetry.addData("i", i);
-         telemetry.addData("d", d);
-         telemetry.addData("feed forword", f);
-         telemetry.addData("targetVelocity", targetvalue);
-         telemetry.addData("Current Velocity", outakeMotor.getVelocity());
-         telemetry.addData("p component",pComponent);
-         telemetry.addData("i component",iComponent);
-         telemetry.addData("d component",dComponent);
+        // ----- INTEGRAL -----
+        integralSum += error * dt;
+        double iComponent = i * integralSum;
 
+        // ----- DERIVATIVE -----
+        double derivative = (error - lastError) / dt;
+        double dComponent = d * derivative;
 
-     }
+        // ----- TOTAL POWER -----
+        double power = fComponent + pComponent + iComponent + dComponent;
+
+        // Clamp motor power
+        power = Math.max(-1.0, Math.min(1.0, power));
+        motor.setPower(power);
+
+        lastError = error;
+
+        // Telemetry
+        telemetry.addData("Target", targetVelocity);
+        telemetry.addData("Velocity", currentVelocity);
+        telemetry.addData("Error", error);
+        telemetry.addData("P", pComponent);
+        telemetry.addData("I", iComponent);
+        telemetry.addData("D", dComponent);
+        telemetry.addData("F", fComponent);
     }
 
 
 
     public void powerControl() {
+        if (gamepad2.a) {
+           runMotor = 1;
+        }
+
         if (gamepad2.x){
             outakeMotor.setPower(-.01);
             sleep(2000);
             outakeMotor.setPower(0);
+            runMotor = 0;
         }
     }
 
@@ -187,12 +202,14 @@ public class MechanumDriveCode extends LinearOpMode {
         waitForStart();
 
         while (opModeIsActive()) {
-            this.drive();// drive
-            this.powerControl(); // stop and set power for shooter
-            this.release();      // open and close gate
-            this.unStuckBall();  // unstuck ball
-            this.logData();      // adds data to telemetry
-            this.wheelVelocity(outakeMotor,targetvalue); // reset the lost power
+            this.drive();
+            this.powerControl();
+            this.release();
+            this.unStuckBall();
+            this.logData();
+            if(runMotor==1) {
+                this.wheelVelocity(outakeMotor,targetvalue);
+            }
             telemetry.update();
         }
     }
