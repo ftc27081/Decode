@@ -1,5 +1,8 @@
 package org.firstinspires.ftc.teamcode;
 
+import static org.firstinspires.ftc.teamcode.MechanumDriveCode.f;
+import static org.firstinspires.ftc.teamcode.MechanumDriveCode.p;
+
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.hardware.DcMotor;
@@ -11,9 +14,18 @@ import com.qualcomm.robotcore.util.ElapsedTime;
 @Autonomous(name = "Depot Zone Blue", group = "Autonomous")
 public class DepotZoneBlue extends LinearOpMode {
 
-    private DcMotorEx flMotor, frMotor, blMotor, brMotor;
-    private DcMotor outakeMotor,slideMotor1,slideMotor2;;
+    private DcMotorEx flMotor, frMotor, blMotor, brMotor,outakeMotor;
     private Servo artifactGate;
+    double lastError = 0;
+
+    private int trunonshooter =0;
+    ElapsedTime timer = new ElapsedTime();
+    public static double p = 0.002;
+    public static double i = 0;
+    public static double d = 0.000102;
+    public static double f = 0.00043;
+
+    public static double targetvalue = 1250;
 
     private ElapsedTime runtime = new ElapsedTime();
 
@@ -29,7 +41,7 @@ public class DepotZoneBlue extends LinearOpMode {
         frMotor = hardwareMap.get(DcMotorEx.class, "frMotor");
         blMotor = hardwareMap.get(DcMotorEx.class, "blMotor");
         brMotor = hardwareMap.get(DcMotorEx.class, "brMotor");
-        outakeMotor = hardwareMap.get(DcMotor.class, "outtakeMotor");
+        outakeMotor = hardwareMap.get(DcMotorEx.class, "outtakeMotor");
         outakeMotor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         artifactGate = hardwareMap.get(Servo.class,"artifactGate");
         artifactGate.setDirection(Servo.Direction.FORWARD);
@@ -38,21 +50,8 @@ public class DepotZoneBlue extends LinearOpMode {
         // Set motor direction
         flMotor.setDirection(DcMotor.Direction.REVERSE);
         blMotor.setDirection(DcMotor.Direction.REVERSE);
-        slideMotor1 = hardwareMap.get(DcMotor.class, "leftMotor");
-        slideMotor2 = hardwareMap.get(DcMotor.class, "rightMotor");
 
 
-        slideMotor1.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-        slideMotor2.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-
-        slideMotor1.setTargetPosition(slideMotor1.getCurrentPosition()-1);
-        slideMotor2.setTargetPosition(slideMotor2.getCurrentPosition()-1);
-
-        slideMotor2.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-        slideMotor1.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-
-        slideMotor1.setPower(-0.1);
-        slideMotor2.setPower(-0.1);
         // Set motor direction
         flMotor.setDirection(DcMotor.Direction.REVERSE);
         blMotor.setDirection(DcMotor.Direction.REVERSE);
@@ -64,7 +63,9 @@ public class DepotZoneBlue extends LinearOpMode {
 
         if (opModeIsActive()) {
             encoderDrive(0.25,  -27, 5); // Drive backward 26 inches at 50% power, 5 second timeout
-            shootBalls();
+           if(trunonshooter==1){
+               wheelVelocity(outakeMotor,1250);
+           }
             encoderStrafe(0.5,-20,5); // move out of zone after shooting
         }
     }
@@ -164,6 +165,7 @@ public class DepotZoneBlue extends LinearOpMode {
         frMotor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
         blMotor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
         brMotor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        trunonshooter=1;
     }
 
     private void encoderTurn(double speed, double degrees, double timeoutS) {
@@ -225,6 +227,54 @@ public class DepotZoneBlue extends LinearOpMode {
         blMotor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
         frMotor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
         brMotor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+    }
+
+    public void wheelVelocity(DcMotorEx motor, double targetVelocity) {
+
+        double currentVelocity = motor.getVelocity();
+        double error = targetVelocity - currentVelocity;
+
+        double dt = timer.seconds();
+        timer.reset();
+
+        telemetry.addData("Seconds passed", dt);
+        telemetry.addData("milisceonds passed",dt*0.0001);
+        telemetry.update();
+
+        // Protect against divide-by-zero
+        if (dt <= 0) return;
+
+        // ----- FEEDFORWARD -----
+        double fComponent = f * targetVelocity;
+
+        // ----- PROPORTIONAL -----
+        double pComponent = p * error;
+
+        // ----- INTEGRAL -----
+        double integralSum = error * dt;
+        double iComponent = i * integralSum;
+
+        // ----- DERIVATIVE -----
+        double derivative = (error - lastError) / dt;
+        double dComponent = d * derivative;
+
+        // ----- TOTAL POWER -----
+        double power = fComponent + pComponent + iComponent + dComponent;
+
+        // Clamp motor power
+        power = Math.max(-1.0, Math.min(1.0, power));
+        motor.setPower(power);
+
+        lastError = error;
+
+        // Telemetry
+        telemetry.addData("Target", targetVelocity);
+        telemetry.addData("Velocity", currentVelocity);
+        telemetry.addData("Error", error);
+        telemetry.addData("P", pComponent);
+        telemetry.addData("I", iComponent);
+        telemetry.addData("D", dComponent);
+        telemetry.addData("F", fComponent);
     }
 
     private void shootBalls(){
