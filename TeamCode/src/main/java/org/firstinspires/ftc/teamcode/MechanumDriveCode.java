@@ -22,12 +22,13 @@ public class MechanumDriveCode extends LinearOpMode {
     double integralSum = 0;
     ElapsedTime timer = new ElapsedTime();
     public int runMotor = 0;
-    public static double p = 0;
+    public static double p = 0.002;
     public static double i = 0;
-    public static double d = 0;
-    public static double f = 0;
+    public static double d = 0.000102;
+    public static double f = 0.00043;
 
-    public static double targetvalue = 10;
+    public static double targetvalue = 1250;
+
 
     private DcMotorEx flMotor, frMotor, blMotor, brMotor, outakeMotor;
     static final double WHEEL_DIAMETER_INCHES = 1.504; // adjust for your wheels
