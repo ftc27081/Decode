@@ -1,21 +1,31 @@
 package org.firstinspires.ftc.teamcode;
 
-import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
+import static org.firstinspires.ftc.teamcode.MechanumDriveCode.f;
+import static org.firstinspires.ftc.teamcode.MechanumDriveCode.p;
+
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
+import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
 
-
-
-@Autonomous(name = "Launch Zone Blue ", group = "Autonomous")
+@Autonomous(name = "Launch Zone Blue", group = "Autonomous")
 public class LaunchZoneBlue extends LinearOpMode {
 
-    private DcMotorEx flMotor, frMotor, blMotor, brMotor;
-    private DcMotor outakeMotor,slideMotor1,slideMotor2;
+    private DcMotorEx flMotor, frMotor, blMotor, brMotor,outakeMotor;
     private Servo artifactGate;
+    double lastError = 0;
+
+    private int turnonshooter =0;
+    ElapsedTime timer = new ElapsedTime();
+    public static double p = 0.002;
+    public static double i = 0;
+    public static double d = 0.000102;
+    public static double f = 0.00043;
+    boolean gateNotOpen = true;
+    public static double targetvalue = 1250;
 
     private ElapsedTime runtime = new ElapsedTime();
 
@@ -31,27 +41,17 @@ public class LaunchZoneBlue extends LinearOpMode {
         frMotor = hardwareMap.get(DcMotorEx.class, "frMotor");
         blMotor = hardwareMap.get(DcMotorEx.class, "blMotor");
         brMotor = hardwareMap.get(DcMotorEx.class, "brMotor");
-        outakeMotor = hardwareMap.get(DcMotor.class, "outtakeMotor");
+        outakeMotor = hardwareMap.get(DcMotorEx.class, "outtakeMotor");
         outakeMotor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         artifactGate = hardwareMap.get(Servo.class,"artifactGate");
         artifactGate.setDirection(Servo.Direction.FORWARD);
         artifactGate.setPosition(1.0);
 
-        slideMotor1 = hardwareMap.get(DcMotor.class, "leftMotor");
-        slideMotor2 = hardwareMap.get(DcMotor.class, "rightMotor");
+        // Set motor direction
+        flMotor.setDirection(DcMotor.Direction.REVERSE);
+        blMotor.setDirection(DcMotor.Direction.REVERSE);
 
 
-        slideMotor1.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-        slideMotor2.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-
-        slideMotor1.setTargetPosition(slideMotor1.getCurrentPosition()-1);
-        slideMotor2.setTargetPosition(slideMotor2.getCurrentPosition()-1);
-
-        slideMotor2.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-        slideMotor1.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-
-        slideMotor1.setPower(-0.1);
-        slideMotor2.setPower(-0.1);
         // Set motor direction
         flMotor.setDirection(DcMotor.Direction.REVERSE);
         blMotor.setDirection(DcMotor.Direction.REVERSE);
@@ -60,11 +60,21 @@ public class LaunchZoneBlue extends LinearOpMode {
         resetEncoders();
 
         waitForStart();
+        ElapsedTime gateControl= new ElapsedTime();
 
         if (opModeIsActive()) {
-            encoderDrive(0.4, 18, 5); // Drive forward 24 inches at 50% power, 5 second timeout
-
-
+            encoderDrive(0.25,  -30, 5); // Drive backward 26 inches at 50% power, 5 second timeout
+            while(turnonshooter == 1){
+                wheelVelocity(outakeMotor,1350);
+                if(gateControl.seconds() > 5 && gateNotOpen) {
+                    openGate();
+                }
+                if(gateControl.seconds() > 9) {
+                    closeGate();
+                    turnonshooter = 0;
+                }
+            }
+            encoderStrafe(0.5,-20,5); // move out of zone after shooting
         }
     }
 
@@ -163,76 +173,68 @@ public class LaunchZoneBlue extends LinearOpMode {
         frMotor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
         blMotor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
         brMotor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+
+        turnonshooter=1;
     }
 
-    private void encoderTurn(double speed, double degrees, double timeoutS) {
 
-        double TURN_DIAMETER_INCHES = 18.0; // Distance between left and right wheels (adjust for your robot)
-        double TURN_CIRCUMFERENCE = TURN_DIAMETER_INCHES * Math.PI;
 
-        // Fraction of a full circle
-        double turnFraction = Math.abs(degrees) / 360.0;
 
-        // How far each wheel travels during the turn
-        double turnDistance = TURN_CIRCUMFERENCE * turnFraction;
+    public void wheelVelocity(DcMotorEx motor, double targetVelocity) {
 
-        // Convert to encoder counts
-        int moveCounts = (int) (turnDistance * COUNTS_PER_INCH);
+        double currentVelocity = motor.getVelocity();
+        double error = targetVelocity - currentVelocity;
 
-        // Left and right sides move in opposite directions
-        int leftTargetChange = (degrees > 0) ? moveCounts : -moveCounts;
-        int rightTargetChange = (degrees > 0) ? -moveCounts : moveCounts;
+        double dt = timer.seconds();
+        timer.reset();
 
-        // Calculate new targets
-        int newLeftFrontTarget = flMotor.getCurrentPosition() + leftTargetChange;
-        int newLeftRearTarget = blMotor.getCurrentPosition() + leftTargetChange;
-        int newRightFrontTarget = frMotor.getCurrentPosition() + rightTargetChange;
-        int newRightRearTarget = brMotor.getCurrentPosition() + rightTargetChange;
+        telemetry.addData("Seconds passed", dt);
+        telemetry.addData("milisceonds passed",dt*0.0001);
+        telemetry.update();
 
-        // Set target positions
-        flMotor.setTargetPosition(newLeftFrontTarget);
-        blMotor.setTargetPosition(newLeftRearTarget);
-        frMotor.setTargetPosition(newRightFrontTarget);
-        brMotor.setTargetPosition(newRightRearTarget);
+        // Protect against divide-by-zero
+        if (dt <= 0) return;
 
-        // Set to RUN_TO_POSITION mode
-        flMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-        blMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-        frMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-        brMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+        // ----- FEEDFORWARD -----
+        double fComponent = f * targetVelocity;
 
-        // Start motion
-        flMotor.setPower(Math.abs(speed));
-        blMotor.setPower(Math.abs(speed));
-        frMotor.setPower(Math.abs(speed));
-        brMotor.setPower(Math.abs(speed));
+        // ----- PROPORTIONAL -----
+        double pComponent = p * error;
 
-        runtime.reset();
-        while (opModeIsActive() &&
-                (runtime.seconds() < timeoutS) &&
-                (flMotor.isBusy() && frMotor.isBusy() && blMotor.isBusy() && brMotor.isBusy())) {
-            telemetry.addData("Turning", "%.1f degrees", degrees);
-            telemetry.update();
-        }
+        // ----- INTEGRAL -----
+        double integralSum = error * dt;
+        double iComponent = i * integralSum;
 
-        // Stop all motion
-        stopAllMotors();
+        // ----- DERIVATIVE -----
+        double derivative = (error - lastError) / dt;
+        double dComponent = d * derivative;
 
-        // Return to normal encoder mode
-        flMotor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-        blMotor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-        frMotor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-        brMotor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        // ----- TOTAL POWER -----
+        double power = fComponent + pComponent + iComponent + dComponent;
+
+        // Clamp motor power
+        power = Math.max(-1.0, Math.min(1.0, power));
+        motor.setPower(power);
+
+        lastError = error;
+
+        // Telemetry
+        telemetry.addData("Target", targetVelocity);
+        telemetry.addData("Velocity", currentVelocity);
+        telemetry.addData("Error", error);
+        telemetry.addData("P", pComponent);
+        telemetry.addData("I", iComponent);
+        telemetry.addData("D", dComponent);
+        telemetry.addData("F", fComponent);
     }
 
-    private void shootBalls(){
-        outakeMotor.setPower(0.6);
-        sleep(7000);
-        //open the gate to launch the balls
+    private void openGate(){
         artifactGate.setPosition(0.5);
-        encoderDrive(0.3, 5, 0);
-        sleep(2000);
-        outakeMotor.setPower(0);
+        gateNotOpen = false;
+    }
+
+    private void closeGate() {
+        artifactGate.setPosition(1);
     }
 
     private void stopAllMotors() {

@@ -18,13 +18,13 @@ public class DepotZoneBlue extends LinearOpMode {
     private Servo artifactGate;
     double lastError = 0;
 
-    private int trunonshooter =0;
+    private int turnonshooter =0;
     ElapsedTime timer = new ElapsedTime();
     public static double p = 0.002;
     public static double i = 0;
     public static double d = 0.000102;
     public static double f = 0.00043;
-
+    boolean gateNotOpen = true;
     public static double targetvalue = 1250;
 
     private ElapsedTime runtime = new ElapsedTime();
@@ -60,11 +60,19 @@ public class DepotZoneBlue extends LinearOpMode {
         resetEncoders();
 
         waitForStart();
+        ElapsedTime gateControl= new ElapsedTime();
 
         if (opModeIsActive()) {
-            encoderDrive(0.25,  -27, 5); // Drive backward 26 inches at 50% power, 5 second timeout
-           if(trunonshooter==1){
-               wheelVelocity(outakeMotor,1250);
+            encoderDrive(0.25,  -30, 5); // Drive backward 26 inches at 50% power, 5 second timeout
+            while(turnonshooter == 1){
+                wheelVelocity(outakeMotor,1350);
+                if(gateControl.seconds() > 5 && gateNotOpen) {
+                    openGate();
+               }
+               if(gateControl.seconds() > 9) {
+                   closeGate();
+                   turnonshooter = 0;
+               }
            }
             encoderStrafe(0.5,-20,5); // move out of zone after shooting
         }
@@ -165,69 +173,12 @@ public class DepotZoneBlue extends LinearOpMode {
         frMotor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
         blMotor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
         brMotor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-        trunonshooter=1;
+
+        turnonshooter=1;
     }
 
-    private void encoderTurn(double speed, double degrees, double timeoutS) {
-
-        double TURN_DIAMETER_INCHES = 18.0; // Distance between left and right wheels (adjust for your robot)
-        double TURN_CIRCUMFERENCE = TURN_DIAMETER_INCHES * Math.PI;
-
-        // Fraction of a full circle
-        double turnFraction = Math.abs(degrees) / 360.0;
-
-        // How far each wheel travels during the turn
-        double turnDistance = TURN_CIRCUMFERENCE * turnFraction;
-
-        // Convert to encoder counts
-        int moveCounts = (int) (turnDistance * COUNTS_PER_INCH);
-
-        // Left and right sides move in opposite directions
-        int leftTargetChange = (degrees > 0) ? moveCounts : -moveCounts;
-        int rightTargetChange = (degrees > 0) ? -moveCounts : moveCounts;
-
-        // Calculate new targets
-        int newLeftFrontTarget = flMotor.getCurrentPosition() + leftTargetChange;
-        int newLeftRearTarget = blMotor.getCurrentPosition() + leftTargetChange;
-        int newRightFrontTarget = frMotor.getCurrentPosition() + rightTargetChange;
-        int newRightRearTarget = brMotor.getCurrentPosition() + rightTargetChange;
-
-        // Set target positions
-        flMotor.setTargetPosition(newLeftFrontTarget);
-        blMotor.setTargetPosition(newLeftRearTarget);
-        frMotor.setTargetPosition(newRightFrontTarget);
-        brMotor.setTargetPosition(newRightRearTarget);
-
-        // Set to RUN_TO_POSITION mode
-        flMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-        blMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-        frMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-        brMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-
-        // Start motion
-        flMotor.setPower(Math.abs(speed));
-        blMotor.setPower(Math.abs(speed));
-        frMotor.setPower(Math.abs(speed));
-        brMotor.setPower(Math.abs(speed));
-
-        runtime.reset();
-        while (opModeIsActive() &&
-                (runtime.seconds() < timeoutS) &&
-                (flMotor.isBusy() && frMotor.isBusy() && blMotor.isBusy() && brMotor.isBusy())) {
-            telemetry.addData("Turning", "%.1f degrees", degrees);
-            telemetry.update();
-        }
 
 
-        // Stop all motion
-        stopAllMotors();
-
-        // Return to normal encoder mode
-        flMotor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-        blMotor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-        frMotor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-        brMotor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-    }
 
     public void wheelVelocity(DcMotorEx motor, double targetVelocity) {
 
@@ -277,14 +228,13 @@ public class DepotZoneBlue extends LinearOpMode {
         telemetry.addData("F", fComponent);
     }
 
-    private void shootBalls(){
-        outakeMotor.setPower(0.6);
-        sleep(4000);
-        //open the gate to launch the balls
+    private void openGate(){
         artifactGate.setPosition(0.5);
-        encoderDrive(0.3, 5, 0);
-        sleep(2000);
-        outakeMotor.setPower(0);
+        gateNotOpen = false;
+    }
+
+    private void closeGate() {
+        artifactGate.setPosition(1);
     }
 
     private void stopAllMotors() {
