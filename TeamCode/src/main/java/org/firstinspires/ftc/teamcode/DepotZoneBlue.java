@@ -25,7 +25,7 @@ public class DepotZoneBlue extends LinearOpMode {
     public static double d = 0.000102;
     public static double f = 0.00043;
     boolean gateNotOpen = true;
-    public static double targetvalue = 1250;
+    public static double targetValue = 1250;
 
     private ElapsedTime runtime = new ElapsedTime();
 
@@ -65,7 +65,7 @@ public class DepotZoneBlue extends LinearOpMode {
         if (opModeIsActive()) {
             encoderDrive(0.25,  -30, 5); // Drive backward 26 inches at 50% power, 5 second timeout
             while(turnonshooter == 1){
-                wheelVelocity(outakeMotor,1350);
+                wheelVelocity(outakeMotor,targetValue);
                 if(gateControl.seconds() > 5 && gateNotOpen) {
                     openGate();
                }
@@ -74,6 +74,7 @@ public class DepotZoneBlue extends LinearOpMode {
                    turnonshooter = 0;
                }
            }
+            stopShooterMotor();
             encoderStrafe(0.5,-20,5); // move out of zone after shooting
         }
     }
@@ -236,6 +237,8 @@ public class DepotZoneBlue extends LinearOpMode {
     private void closeGate() {
         artifactGate.setPosition(1);
     }
+
+    private void stopShooterMotor() { outakeMotor.setPower(0); }
 
     private void stopAllMotors() {
         flMotor.setPower(0);

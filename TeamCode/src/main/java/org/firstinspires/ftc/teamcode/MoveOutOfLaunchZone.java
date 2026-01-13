@@ -1,8 +1,5 @@
 package org.firstinspires.ftc.teamcode;
 
-import static org.firstinspires.ftc.teamcode.MechanumDriveCode.f;
-import static org.firstinspires.ftc.teamcode.MechanumDriveCode.p;
-
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.hardware.DcMotor;
@@ -11,8 +8,8 @@ import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
 
-@Autonomous(name = "Launch Zone Red ", group = "Autonomous")
-public class LaunchZoneRed extends LinearOpMode {
+@Autonomous(name = "Move out of Launch Zone", group = "Autonomous")
+public class MoveOutOfLaunchZone extends LinearOpMode {
 
     private DcMotorEx flMotor, frMotor, blMotor, brMotor,outakeMotor;
     private Servo artifactGate;
@@ -63,19 +60,7 @@ public class LaunchZoneRed extends LinearOpMode {
         ElapsedTime gateControl= new ElapsedTime();
 
         if (opModeIsActive()) {
-            encoderDrive(0.25,  1, 5); // Drive backward 26 inches at 50% power, 5 second timeout
-            while(turnonshooter == 1){
-                wheelVelocity(outakeMotor,targetValue);
-                if(gateControl.seconds() > 5 && gateNotOpen) {
-                    openGate();
-                }
-                if(gateControl.seconds() > 9) {
-                    closeGate();
-                    turnonshooter = 0;
-                }
-            }
-            stopShooterMotor();
-            encoderDrive(0.25,  15, 5); // move out of zone after shooting
+            encoderDrive(0.25,  20, 5); // move out of zone after shooting
         }
     }
 

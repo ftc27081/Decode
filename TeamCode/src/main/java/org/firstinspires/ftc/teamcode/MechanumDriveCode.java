@@ -27,7 +27,7 @@ public class MechanumDriveCode extends LinearOpMode {
     public static double d = 0.000102;
     public static double f = 0.00043;
 
-    public static double targetvalue = 1250;
+    public static double targetValue = 1250;
 
 
     private DcMotorEx flMotor, frMotor, blMotor, brMotor, outakeMotor;
@@ -209,7 +209,7 @@ public class MechanumDriveCode extends LinearOpMode {
             this.unStuckBall();
             this.logData();
             if(runMotor==1) {
-                this.wheelVelocity(outakeMotor,targetvalue);
+                this.wheelVelocity(outakeMotor,targetValue);
             }
             telemetry.update();
         }
