@@ -1,8 +1,5 @@
 package org.firstinspires.ftc.teamcode;
 
-import static org.firstinspires.ftc.teamcode.MechanumDriveCode.f;
-import static org.firstinspires.ftc.teamcode.MechanumDriveCode.p;
-
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.hardware.DcMotor;
@@ -10,22 +7,36 @@ import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
+import org.firstinspires.ftc.robotcore.external.hardware.camera.WebcamName;
+import org.firstinspires.ftc.vision.VisionPortal;
+import org.firstinspires.ftc.vision.apriltag.AprilTagDetection;
+import org.firstinspires.ftc.vision.apriltag.AprilTagProcessor;
 
-@Autonomous(name = "Launch Zone Blue", group = "Autonomous")
-public class LaunchZoneBlue extends LinearOpMode {
+import java.util.List;
+
+
+@Autonomous(name = "Depot Zone Blue AprilTag", group = "Autonomous")
+public class DepotZoneBlueWithAprilTag extends LinearOpMode {
 
     private DcMotorEx flMotor, frMotor, blMotor, brMotor,outakeMotor;
     private Servo artifactGate;
+
+    AprilTagWebcam aprilTagWebcam = new AprilTagWebcam();
+    static final double _DESIRED_TARGET_X = 0;   //  centered on tag
+    static final double _DESIRED_TARGET_Y = 106;  // 1060 cm away from tag
+    static final double _DESIRED_TARGET_YAW = 0;
+
+    static final double POSITION_TOLERANCE = 3.0; // 3 cm
     double lastError = 0;
 
-    private int turnonshooter =0;
+    private int turnOnShooter =0;
     ElapsedTime timer = new ElapsedTime();
     public static double p = 0.002;
     public static double i = 0;
     public static double d = 0.000102;
     public static double f = 0.00043;
     boolean gateNotOpen = true;
-    public static double targetValue = 5800;
+    public static double targetValue = 1250;
 
     private ElapsedTime runtime = new ElapsedTime();
 
@@ -33,6 +44,9 @@ public class LaunchZoneBlue extends LinearOpMode {
     static final double TICKS_PER_REV = 537.6;  // For 312 RPM Yellow Jackets
     static final double WHEEL_DIAMETER_INCHES = 4.0; // adjust for your wheels
     static final double COUNTS_PER_INCH = TICKS_PER_REV / (WHEEL_DIAMETER_INCHES * Math.PI);
+    static final double TRACK_WIDTH_INCHES = 15.0; // distance between left & right wheels (center-to-center)
+    static final double COUNTS_PER_DEGREE =
+            (Math.PI * TRACK_WIDTH_INCHES * COUNTS_PER_INCH) / 360.0;
 
     @Override
     public void runOpMode() {
@@ -56,6 +70,9 @@ public class LaunchZoneBlue extends LinearOpMode {
         flMotor.setDirection(DcMotor.Direction.REVERSE);
         blMotor.setDirection(DcMotor.Direction.REVERSE);
 
+        //setup webcamera
+        aprilTagWebcam.init(hardwareMap, telemetry);
+
         // Reset encoders
         resetEncoders();
 
@@ -63,19 +80,22 @@ public class LaunchZoneBlue extends LinearOpMode {
         ElapsedTime gateControl= new ElapsedTime();
 
         if (opModeIsActive()) {
-            encoderDrive(0.25,  1, 5); // Drive backward 26 inches at 50% power, 5 second timeout
-            while(turnonshooter == 1){
+            encoderDrive(0.25,  -30, 5); // Drive backward 26 inches at 50% power, 5 second timeout
+
+            driveToDesiredLocation();
+
+            while(turnOnShooter == 1){
                 wheelVelocity(outakeMotor,targetValue);
                 if(gateControl.seconds() > 5 && gateNotOpen) {
                     openGate();
-                }
-                if(gateControl.seconds() > 9) {
-                    closeGate();
-                    turnonshooter = 0;
-                }
-            }
+               }
+               if(gateControl.seconds() > 9) {
+                   closeGate();
+                   turnOnShooter = 0;
+               }
+           }
             stopShooterMotor();
-            encoderDrive(0.25,  15, 5); // move out of zone after shooting
+            encoderStrafe(0.5,-20,5); // move out of zone after shooting
         }
     }
 
@@ -175,11 +195,51 @@ public class LaunchZoneBlue extends LinearOpMode {
         blMotor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
         brMotor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
 
-        turnonshooter=1;
+        turnOnShooter=1;
     }
 
+    private void encoderTurn(double speed, double degrees, double timeoutS) {
+        // degrees: + = turn left (CCW), - = turn right (CW)
+        int turnCounts = (int) Math.round(degrees * COUNTS_PER_DEGREE);
 
+        int flTarget = flMotor.getCurrentPosition() + turnCounts;
+        int blTarget = blMotor.getCurrentPosition() + turnCounts;
+        int frTarget = frMotor.getCurrentPosition() - turnCounts;
+        int brTarget = brMotor.getCurrentPosition() - turnCounts;
 
+        flMotor.setTargetPosition(flTarget);
+        blMotor.setTargetPosition(blTarget);
+        frMotor.setTargetPosition(frTarget);
+        brMotor.setTargetPosition(brTarget);
+
+        flMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+        frMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+        blMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+        brMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+
+        speed = Math.abs(speed); // keep speed positive; direction comes from targets
+        flMotor.setPower(speed);
+        frMotor.setPower(speed);
+        blMotor.setPower(speed);
+        brMotor.setPower(speed);
+
+        runtime.reset();
+        while (opModeIsActive()
+                && runtime.seconds() < timeoutS
+                && (flMotor.isBusy() && frMotor.isBusy() && blMotor.isBusy() && brMotor.isBusy())) {
+
+            telemetry.addData("Turning", "%.1f deg", degrees);
+            telemetry.addData("Targets", "FL:%d FR:%d BL:%d BR:%d", flTarget, frTarget, blTarget, brTarget);
+            telemetry.update();
+        }
+
+        stopAllMotors();
+
+        flMotor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        frMotor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        blMotor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        brMotor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+    }
 
     public void wheelVelocity(DcMotorEx motor, double targetVelocity) {
 
@@ -246,4 +306,42 @@ public class LaunchZoneBlue extends LinearOpMode {
         blMotor.setPower(0);
         brMotor.setPower(0);
     }
+
+    private void driveToDesiredLocation() {
+        boolean tagVisible = false;
+        boolean reachedDesiredLocation = false;
+
+        while (!tagVisible && !reachedDesiredLocation) {
+            aprilTagWebcam.update();
+            AprilTagDetection id20 = aprilTagWebcam.getTagBySpecificID(20);
+            if (id20 != null) {
+                double currentX = id20.ftcPose.x; // cm
+                double currentY = id20.ftcPose.y; // cm
+                double currentYaw = id20.ftcPose.yaw; //degrees
+
+                // Compute error
+                double deltaX = _DESIRED_TARGET_X - currentX;
+                double deltaY = _DESIRED_TARGET_Y - currentY;
+                double deltaYaw = _DESIRED_TARGET_YAW - currentYaw;
+
+                telemetry.addLine("Current location "+ "x:" + currentX + " y:" + currentY + " yaw:" + currentYaw);
+                telemetry.addLine("Delta  "+ "x:" + deltaX/2.54 + " y:" + deltaY/2.54 + " yaw:" + deltaYaw);
+                telemetry.update();
+
+                tagVisible = true;
+
+                encoderTurn(0.5,deltaYaw,3);
+                encoderStrafe(0.5, (deltaX/2.54), 3);
+                encoderDrive(0.5, -(deltaY/2.54), 3);
+
+                // Stop if close enough
+
+                if (Math.abs(deltaX) < POSITION_TOLERANCE &&
+                        Math.abs(deltaY) < POSITION_TOLERANCE) {
+                    reachedDesiredLocation = true;
+                }
+            }
+        }
+    }
+
 }

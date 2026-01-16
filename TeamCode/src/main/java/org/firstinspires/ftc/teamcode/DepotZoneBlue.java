@@ -75,7 +75,7 @@ public class DepotZoneBlue extends LinearOpMode {
                }
            }
             stopShooterMotor();
-            encoderStrafe(0.5,-20,5); // move out of zone after shooting
+            encoderStrafe(0.5,-22,5); // move out of zone after shooting
         }
     }
 

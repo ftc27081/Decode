@@ -25,7 +25,7 @@ public class LaunchZoneRed extends LinearOpMode {
     public static double d = 0.000102;
     public static double f = 0.00043;
     boolean gateNotOpen = true;
-    public static double targetValue = 4500;
+    public static double targetValue = 5800;
 
     private ElapsedTime runtime = new ElapsedTime();
 
