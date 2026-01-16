@@ -44,7 +44,7 @@ public class DepotZoneBlueWithAprilTag extends LinearOpMode {
     static final double TICKS_PER_REV = 537.6;  // For 312 RPM Yellow Jackets
     static final double WHEEL_DIAMETER_INCHES = 4.0; // adjust for your wheels
     static final double COUNTS_PER_INCH = TICKS_PER_REV / (WHEEL_DIAMETER_INCHES * Math.PI);
-    static final double TRACK_WIDTH_INCHES = 15.0; // distance between left & right wheels (center-to-center)
+    static final double TRACK_WIDTH_INCHES = 17.0; // distance between left & right wheels (center-to-center)
     static final double COUNTS_PER_DEGREE =
             (Math.PI * TRACK_WIDTH_INCHES * COUNTS_PER_INCH) / 360.0;
 
