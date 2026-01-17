@@ -63,7 +63,7 @@ public class DepotZoneBlue extends LinearOpMode {
         ElapsedTime gateControl= new ElapsedTime();
 
         if (opModeIsActive()) {
-            encoderDrive(0.25,  -30, 5); // Drive backward 26 inches at 50% power, 5 second timeout
+            encoderDrive(0.25,  -27, 5); // Drive backward 26 inches at 50% power, 5 second timeout
             while(turnonshooter == 1){
                 wheelVelocity(outakeMotor,targetValue);
                 if(gateControl.seconds() > 5 && gateNotOpen) {

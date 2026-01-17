@@ -8,8 +8,8 @@ import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
 
-@Autonomous(name = "Move out of Launch Zone", group = "Autonomous")
-public class MoveOutOfLaunchZone extends LinearOpMode {
+@Autonomous(name = "Blue Move out of Launch Zone", group = "Autonomous")
+public class BlueMoveOutOfLaunchZone extends LinearOpMode {
 
     private DcMotorEx flMotor, frMotor, blMotor, brMotor,outakeMotor;
     private Servo artifactGate;
@@ -22,7 +22,7 @@ public class MoveOutOfLaunchZone extends LinearOpMode {
     public static double d = 0.000102;
     public static double f = 0.00043;
     boolean gateNotOpen = true;
-    public static double targetValue = 4500;
+    public static double targetValue = 1550;
 
     private ElapsedTime runtime = new ElapsedTime();
 
@@ -30,6 +30,9 @@ public class MoveOutOfLaunchZone extends LinearOpMode {
     static final double TICKS_PER_REV = 537.6;  // For 312 RPM Yellow Jackets
     static final double WHEEL_DIAMETER_INCHES = 4.0; // adjust for your wheels
     static final double COUNTS_PER_INCH = TICKS_PER_REV / (WHEEL_DIAMETER_INCHES * Math.PI);
+    static final double TRACK_WIDTH_INCHES = 17.0; // distance between left & right wheels (center-to-center)
+    static final double COUNTS_PER_DEGREE =
+            (Math.PI * TRACK_WIDTH_INCHES * COUNTS_PER_INCH) / 360.0;
 
     @Override
     public void runOpMode() {
@@ -57,10 +60,25 @@ public class MoveOutOfLaunchZone extends LinearOpMode {
         resetEncoders();
 
         waitForStart();
-        ElapsedTime gateControl= new ElapsedTime();
-
         if (opModeIsActive()) {
-            encoderDrive(0.25,  20, 5); // move out of zone after shooting
+            encoderDrive(0.25,  75, 5); // move out of zone after shooting
+            encoderTurn(0.5, -50, 3);
+            sleep(3000);
+            encoderStrafe(0.5, 6,5);
+
+            ElapsedTime gateControl= new ElapsedTime();
+            while(turnonshooter == 1) {
+                wheelVelocity(outakeMotor,targetValue);
+                if(gateControl.seconds() > 5 && gateNotOpen) {
+                    openGate();
+                }
+                if(gateControl.seconds() > 9) {
+                    closeGate();
+                    turnonshooter = 0;
+                }
+            }
+            stopShooterMotor();
+            encoderStrafe(0.5,-22,5); // move out of zone after shooting
         }
     }
 
@@ -163,8 +181,41 @@ public class MoveOutOfLaunchZone extends LinearOpMode {
         turnonshooter=1;
     }
 
+    private void encoderTurn(double speed, double degrees, double timeoutS) {
+        // degrees: + = turn left (CCW), - = turn right (CW)
+        int turnCounts = (int) Math.round(degrees * COUNTS_PER_DEGREE);
 
+        int flTarget = flMotor.getCurrentPosition() + turnCounts;
+        int blTarget = blMotor.getCurrentPosition() + turnCounts;
+        int frTarget = frMotor.getCurrentPosition() - turnCounts;
+        int brTarget = brMotor.getCurrentPosition() - turnCounts;
 
+        flMotor.setTargetPosition(flTarget);
+        blMotor.setTargetPosition(blTarget);
+        frMotor.setTargetPosition(frTarget);
+        brMotor.setTargetPosition(brTarget);
+
+        flMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+        frMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+        blMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+        brMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+
+        speed = Math.abs(speed); // keep speed positive; direction comes from targets
+        flMotor.setPower(speed);
+        frMotor.setPower(speed);
+        blMotor.setPower(speed);
+        brMotor.setPower(speed);
+
+        runtime.reset();
+        while (opModeIsActive()
+                && runtime.seconds() < timeoutS
+                && (flMotor.isBusy() && frMotor.isBusy() && blMotor.isBusy() && brMotor.isBusy())) {
+
+            telemetry.addData("Turning", "%.1f deg", degrees);
+            telemetry.addData("Targets", "FL:%d FR:%d BL:%d BR:%d", flTarget, frTarget, blTarget, brTarget);
+            telemetry.update();
+        }
+    }
 
     public void wheelVelocity(DcMotorEx motor, double targetVelocity) {
 
