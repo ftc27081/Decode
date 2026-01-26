@@ -134,10 +134,10 @@ public class LaunchZoneBlue extends LinearOpMode {
     }
 
     private void encoderDrive(double speed, double inches, double timeoutS) {
-        int newLeftFrontTarget = flMotor.getCurrentPosition() + (int)(inches * COUNTS_PER_INCH);
-        int newRightFrontTarget = frMotor.getCurrentPosition() + (int)(inches * COUNTS_PER_INCH);
-        int newLeftRearTarget = blMotor.getCurrentPosition() + (int)(inches * COUNTS_PER_INCH);
-        int newRightRearTarget = brMotor.getCurrentPosition() + (int)(inches * COUNTS_PER_INCH);
+        int newLeftFrontTarget = flMotor.getCurrentPosition() + (int) (inches * COUNTS_PER_INCH);
+        int newRightFrontTarget = frMotor.getCurrentPosition() + (int) (inches * COUNTS_PER_INCH);
+        int newLeftRearTarget = blMotor.getCurrentPosition() + (int) (inches * COUNTS_PER_INCH);
+        int newRightRearTarget = brMotor.getCurrentPosition() + (int) (inches * COUNTS_PER_INCH);
 
         // Set Target Positions
         flMotor.setTargetPosition(newLeftFrontTarget);
